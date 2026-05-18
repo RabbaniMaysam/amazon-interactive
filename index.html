@@ -39,25 +39,34 @@
     font-size: 14px;
     margin-bottom: 24px;
   }
-  .container {
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 16px;
     max-width: 1600px;
   }
-  .params-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 8px 24px;
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
   }
-  .plots-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  .left, .right {
+    display: flex;
+    flex-direction: column;
     gap: 16px;
+  }
+  .param-section-header {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin: 6px 0 4px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--border);
   }
   .panel {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 16px 20px;
-    margin-bottom: 16px;
   }
   .panel h2 {
     font-size: 15px;
@@ -188,12 +197,17 @@
 
 <div id="warn" class="warn"></div>
 
-<div class="container">
+<div class="layout">
 
-  <!-- Static parameters -->
-  <div class="panel">
-    <h2>Static parameters</h2>
-    <div class="params-grid">
+  <!-- LEFT column: parameters + outcomes stacked -->
+  <div class="left">
+
+    <!-- Parameters block (all sliders) -->
+    <div class="panel">
+      <h2>Parameters</h2>
+
+      <div class="param-section-header">Static</div>
+
       <div class="param">
         <div class="param-label"><span>$c$ — third-party marginal cost</span><span id="c-val">8.00</span></div>
         <input type="range" id="c" min="1" max="15" step="0.05" value="8">
@@ -210,13 +224,9 @@
         <div class="param-label"><span>$\alpha$ — visibility-cost coefficient, $\psi(\sigma)=\alpha e^{2\sigma}$</span><span id="alpha-val">0.13406</span></div>
         <input type="range" id="alpha" min="0.01" max="1" step="0.001" value="0.1340640092">
       </div>
-    </div>
-  </div>
 
-  <!-- Dynamic parameters -->
-  <div class="panel">
-    <h2>Dynamic parameters</h2>
-    <div class="params-grid">
+      <div class="param-section-header">Dynamic</div>
+
       <div class="param">
         <div class="param-label"><span>$\delta$ — discount factor</span><span id="delta-val">0.95</span></div>
         <input type="range" id="delta" min="0.5" max="0.999" step="0.001" value="0.95">
@@ -229,30 +239,31 @@
         <div class="param-label"><span>$K$ — platform entry cost per category</span><span id="K-val">1.00</span></div>
         <input type="range" id="K" min="0.1" max="5" step="0.05" value="1">
       </div>
+
+      <div class="actions" style="margin-top: 12px;">
+        <button onclick="resetDefaults()">Reset to paper calibration</button>
+      </div>
+
+      <div class="notes">
+        Category sizes $\theta_k$ are uniform on $[0,1]$ ($\bar\Theta = 0.5$). Identifying assumption: $c_A = c$.
+      </div>
     </div>
-    <div class="notes">
-      Category sizes $\theta_k$ are assumed uniformly distributed on $[0,1]$, so $\bar\Theta = 0.5$ throughout.
+
+    <!-- Equilibrium outcomes block -->
+    <div class="panel results">
+      <h2>Equilibrium outcomes</h2>
+      <table id="results-table">
+        <!-- filled by JS -->
+      </table>
+      <div class="notes">
+        Highlighted rows match the headline values reported in Section F (Numerical Calibration) of the manuscript.
+      </div>
     </div>
+
   </div>
 
-  <div class="actions">
-    <button onclick="resetDefaults()">Reset to paper calibration</button>
-  </div>
-
-  <!-- Results -->
-  <div class="panel results">
-    <h2>Equilibrium outcomes</h2>
-    <table id="results-table">
-      <!-- filled by JS -->
-    </table>
-    <div class="notes">
-      Highlighted rows match the headline values reported in Section F (Numerical Calibration) of the manuscript.
-      Identifying assumption: $c_A = c$ (platform has the same marginal cost as third-party sellers).
-    </div>
-  </div>
-
-  <!-- Plots -->
-  <div class="plots-grid">
+  <!-- RIGHT column: plots as separate blocks -->
+  <div class="right">
     <div class="plot-container">
       <div id="plot-transition"></div>
     </div>
