@@ -55,10 +55,46 @@
   }
   .right {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 16px;
     align-content: start;
     min-width: 0;
+  }
+  .fig-toggle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .fig-toggle-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  .fig-toggle-list label:hover {
+    background: var(--soft-blue);
+  }
+  .fig-toggle-list input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .fig-toggle-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .fig-toggle-actions button {
+    font-size: 12px;
+    padding: 4px 10px;
   }
   .param-section-header {
     font-size: 12px;
@@ -267,33 +303,48 @@
       </div>
     </div>
 
+    <!-- Figure visibility toggles -->
+    <div class="panel">
+      <h2>Figures</h2>
+      <div class="fig-toggle-list">
+        <label><input type="checkbox" data-target="fig-transition"  checked> Transition path</label>
+        <label><input type="checkbox" data-target="fig-profit"      checked> Platform profit decomposition</label>
+        <label><input type="checkbox" data-target="fig-welfare"     checked> Consumer welfare W(&tau;<sub>t</sub>)</label>
+        <label><input type="checkbox" data-target="fig-sellers"     checked> Third-party sellers N<sub>t</sub></label>
+        <label><input type="checkbox" data-target="fig-shares"      checked> Aggregate market shares</label>
+        <label><input type="checkbox" data-target="fig-entry-flow"  checked> Per-period entry flow &Delta;Y<sub>t</sub></label>
+        <label><input type="checkbox" data-target="fig-cumloss"     checked> Cumulative welfare loss</label>
+      </div>
+      <div class="fig-toggle-actions">
+        <button onclick="setAllFigs(true)">All on</button>
+        <button class="secondary" onclick="setAllFigs(false)">All off</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- RIGHT column: plots as separate blocks -->
   <div class="right">
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-transition">
       <div id="plot-transition"></div>
     </div>
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-profit">
       <div id="plot-profit"></div>
     </div>
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-welfare">
       <div id="plot-welfare"></div>
     </div>
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-sellers">
       <div id="plot-sellers"></div>
     </div>
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-shares">
       <div id="plot-shares"></div>
     </div>
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-entry-flow">
       <div id="plot-entry-flow"></div>
     </div>
-    <div class="plot-container">
+    <div class="plot-container" data-figure="fig-cumloss">
       <div id="plot-cumloss"></div>
-    </div>
-    <div class="plot-container">
-      <div id="plot-fees"></div>
     </div>
   </div>
 
@@ -740,7 +791,6 @@ function update() {
   const rows = [
     { section: "Static optimum" },
     { label: "$\\sigma^*$ (visibility)", val: fmt(sigmaStar) },
-    { label: "$\\tau^*$ (fee)", val: fmt(tauStar), highlight: true },
     { label: "$s_A$ (platform share)", val: fmt(sA_star), highlight: true },
     { label: "$s_S$ (fringe share)", val: fmt(sS_star), highlight: true },
     { label: "$s_0$ (outside share, $R$)", val: fmt(R_star), highlight: true },
@@ -754,17 +804,18 @@ function update() {
     { section: "Welfare" },
     { label: "$W(\\tau^*)$ (consumer surplus)", val: fmt(W_star) },
     { label: "$W(\\tau^M)$ (pure-marketplace)", val: fmt(W_M) },
-    { label: "$\\tau^M$", val: fmt(tauM) },
     { section: "Dynamic steady state" },
     { label: "$\\theta^e$ (entry threshold)", val: fmt(theta_e_static) },
     { label: "$\\mu_{ss}$ (fraction of categories entered)", val: fmt(mu_static, 4) },
     { label: "$Y_{ss}$ (size-weighted footprint)", val: fmt(Y_static, 4) },
-    { label: "$\\tau_{ss}$ (steady-state fee)", val: fmt(tauSS, 6), highlight: true },
-    { label: "$\\tau^0$ (period-zero fee)", val: fmt(tau0, 6) },
-    { label: "$\\tau^M$ (pure-marketplace fee)", val: fmt(tauM, 6) },
     { section: "Welfare under the dynamic transition" },
     { label: "$W(\\tau^M) - W(\\tau_{ss})$", val: fmt((W_M !== null && W_SS !== null) ? W_M - W_SS : null, 6) },
-    { label: "$\\Delta \\mathcal W_{ss} = \\bar\\Theta\\,[W(\\tau^M) - W(\\tau_{ss})]$", val: fmt(welfareLoss, 6), highlight: true }
+    { label: "$\\Delta \\mathcal W_{ss} = \\bar\\Theta\\,[W(\\tau^M) - W(\\tau_{ss})]$", val: fmt(welfareLoss, 6), highlight: true },
+    { section: "Fee benchmarks" },
+    { label: "$\\tau^M$ (pure marketplace)",         val: fmt(tauM, 6) },
+    { label: "$\\tau^0$ (period-zero dynamic)",      val: fmt(tau0, 6) },
+    { label: "$\\tau_{ss}$ (steady-state dynamic)",  val: fmt(tauSS, 6), highlight: true },
+    { label: "$\\tau^*$ (one-shot static joint)",    val: fmt(tauStar, 6) }
   ];
 
   const tbl = document.getElementById("results-table");
@@ -907,64 +958,33 @@ function update() {
     yaxis: { title: "Σ δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]" }
   }), cfg);
 
-  // Plot 8 — fee benchmarks (static reference)
-  if (tauM !== null && tau0 !== null && tauSS !== null && tauStar !== null) {
-    const feeData = [
-      { name: "τ<sup>M</sup>   pure marketplace",        val: tauM,    color: "#1B6B4A" },
-      { name: "τ<sup>0</sup>   period-zero dynamic",     val: tau0,    color: "#1F4E79" },
-      { name: "τ<sub>ss</sub>  steady-state dynamic",    val: tauSS,   color: "#8A1538" },
-      { name: "τ*   one-shot static joint",              val: tauStar, color: "#6B7280" }
-    ];
-    const maxFee = Math.max(...feeData.map(d => d.val));
-    const xMax = Math.max(maxFee * 1.25, maxFee + 0.05);
-    Plotly.react("plot-fees", [
-      {
-        x: feeData.map(d => d.val),
-        y: feeData.map(d => d.name),
-        type: "bar",
-        orientation: "h",
-        marker: {
-          color: feeData.map(d => d.color),
-          line: { color: "#ffffff", width: 1 }
-        },
-        text: feeData.map(d => d.val.toFixed(6)),
-        textposition: "outside",
-        textfont: { size: 12, color: "#1a1a1a" },
-        cliponaxis: false,
-        hovertemplate: "%{y}<br>τ = %{x:.6f}<extra></extra>",
-        width: 0.6
-      }
-    ], {
-      title: {
-        text: "Fee benchmarks at current parameters",
-        font: { size: 14 },
-        x: 0.02, xanchor: "left"
-      },
-      xaxis: {
-        title: { text: "Fee τ", font: { size: 12 } },
-        range: [0, xMax],
-        zeroline: true,
-        zerolinecolor: "#999",
-        gridcolor: "#eee",
-        tickfont: { size: 11 }
-      },
-      yaxis: {
-        automargin: true,
-        tickfont: { size: 12 },
-        autorange: "reversed"
-      },
-      margin: { l: 10, r: 60, t: 40, b: 50 },
-      height: 320,
-      plot_bgcolor: "#fff",
-      paper_bgcolor: "#fff",
-      bargap: 0.35
-    }, { displayModeBar: false, responsive: true });
-  }
 }
 
 PARAMS.forEach(k => {
   document.getElementById(k).addEventListener("input", update);
 });
+
+// ----------------------------------------------------------------------------
+// Figure visibility toggles
+// ----------------------------------------------------------------------------
+function applyFigToggle(cb) {
+  const target = document.querySelector(`[data-figure="${cb.dataset.target}"]`);
+  if (!target) return;
+  target.style.display = cb.checked ? "" : "none";
+  if (cb.checked && window.Plotly) {
+    const plotDiv = target.querySelector('[id^="plot-"]');
+    if (plotDiv) Plotly.Plots.resize(plotDiv);
+  }
+}
+document.querySelectorAll('.fig-toggle-list input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener("change", () => applyFigToggle(cb));
+});
+function setAllFigs(state) {
+  document.querySelectorAll('.fig-toggle-list input[type="checkbox"]').forEach(cb => {
+    cb.checked = state;
+    applyFigToggle(cb);
+  });
+}
 
 document.addEventListener("DOMContentLoaded", update);
 </script>
