@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interactive Calibration — Amazon Brand Paper</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<style>
+  :root {
+    --bg: #f8f8f8;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #555555;
+    --border: #e0e0e0;
+    --accent: #1F4E79;
+    --highlight: #8A1538;
+    --soft-blue: #eef5ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    margin: 0;
+    padding: 24px;
+    line-height: 1.45;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px 0;
+    color: var(--accent);
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    max-width: 1400px;
+  }
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .panel h2 {
+    font-size: 15px;
+    margin: 0 0 12px 0;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .param {
+    margin-bottom: 12px;
+  }
+  .param-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .param-label span:first-child {
+    color: var(--muted);
+  }
+  .param-label span:last-child {
+    font-weight: 600;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .results table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .results th, .results td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .results th {
+    color: var(--muted);
+    font-weight: 500;
+    width: 70%;
+  }
+  .results td {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    text-align: right;
+  }
+  .results tr.section-row td {
+    background: var(--soft-blue);
+    color: var(--accent);
+    text-align: left;
+    font-weight: 600;
+    font-family: inherit;
+    padding-top: 8px;
+  }
+  .results .highlight td {
+    color: var(--highlight);
+    font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--soft-blue);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 8px;
+  }
+  .warn {
+    background: #fff4f6;
+    color: var(--highlight);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .warn.show { display: block; }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button.secondary {
+    background: var(--panel);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  button:hover { opacity: 0.9; }
+  .notes {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  .plot-container {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .formula-block {
+    background: var(--soft-blue);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<h1>Interactive Calibration</h1>
+<div class="subtitle">
+  A companion to the paper "Amazon's Brand Strategy." Drag the parameter sliders; the equilibrium
+  values, welfare, and dynamic transition path update in real time.
+</div>
+
+<div id="warn" class="warn"></div>
+
+<div class="layout">
+
+  <div>
+    <!-- Static parameters -->
+    <div class="panel">
+      <h2>Static parameters</h2>
+
+      <div class="param">
+        <div class="param-label"><span>$c$ — third-party marginal cost</span><span id="c-val">8.00</span></div>
+        <input type="range" id="c" min="1" max="15" step="0.05" value="8">
+      </div>
+
+      <div class="param">
+        <div class="param-label"><span>$F$ — third-party entry cost</span><span id="F-val">0.30945</span></div>
+        <input type="range" id="F" min="0.05" max="1" step="0.001" value="0.3094478571">
+      </div>
+
+      <div class="param">
+        <div class="param-label"><span>$v$ — intrinsic product value</span><span id="v-val">13.17537</span></div>
+        <input type="range" id="v" min="8" max="20" step="0.05" value="13.1753747156">
+      </div>
+
+      <div class="param">
+        <div class="param-label"><span>$\alpha$ — visibility-cost coefficient, $\psi(\sigma)=\alpha e^{2\sigma}$</span><span id="alpha-val">0.13406</span></div>
+        <input type="range" id="alpha" min="0.01" max="1" step="0.001" value="0.1340640092">
+      </div>
+    </div>
+
+    <!-- Dynamic parameters -->
+    <div class="panel">
+      <h2>Dynamic parameters</h2>
+
+      <div class="param">
+        <div class="param-label"><span>$\delta$ — discount factor</span><span id="delta-val">0.95</span></div>
+        <input type="range" id="delta" min="0.5" max="0.999" step="0.001" value="0.95">
+      </div>
+
+      <div class="param">
+        <div class="param-label"><span>$\lambda$ — entry speed (fraction of gap closed per period)</span><span id="lambda-val">0.50</span></div>
+        <input type="range" id="lambda" min="0.05" max="1" step="0.01" value="0.5">
+      </div>
+
+      <div class="param">
+        <div class="param-label"><span>$K$ — platform entry cost per category</span><span id="K-val">1.00</span></div>
+        <input type="range" id="K" min="0.1" max="5" step="0.05" value="1">
+      </div>
+
+      <div class="notes">
+        Category sizes $\theta_k$ are assumed uniformly distributed on $[0,1]$, so $\bar\Theta = 0.5$ throughout.
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="resetDefaults()">Reset to paper calibration</button>
+    </div>
+  </div>
+
+  <div>
+    <!-- Results -->
+    <div class="panel results">
+      <h2>Equilibrium outcomes</h2>
+      <table id="results-table">
+        <!-- filled by JS -->
+      </table>
+      <div class="notes">
+        Highlighted rows match the headline values reported in Section F (Numerical Calibration) of the manuscript.
+        Identifying assumption: $c_A = c$ (platform has the same marginal cost as third-party sellers).
+      </div>
+    </div>
+
+    <!-- Dynamic transition plot -->
+    <div class="plot-container">
+      <div id="plot-transition"></div>
+    </div>
+
+    <!-- Fee comparison plot -->
+    <div class="plot-container">
+      <div id="plot-fees"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================================
+// Math: closed-form derivations under c_A = c and psi(sigma) = alpha * e^(2 sigma)
+// ============================================================================
+
+function makeModel(p) {
+  const { c, F, v, alpha, delta, lambda, K } = p;
+  const Theta = 0.5; // uniform G on [0,1]
+
+  // sigma-FOC closed form: s_A = psi'(sigma)
+  // F e^{sigma-tau}/(1-tau) = 2 alpha e^{2 sigma}
+  // => sigma = ln(F e^{-tau} / (2 alpha (1-tau)))
+  function sigmaOfTau(tau) {
+    const arg = (F * Math.exp(-tau)) / (2 * alpha * (1 - tau));
+    return Math.log(arg);
+  }
+
+  function sA(sigma, tau) {
+    return (F * Math.exp(sigma - tau)) / (1 - tau);
+  }
+
+  function R(tau) {
+    return (F * Math.exp(1 - v + c / (1 - tau))) / (1 - tau);
+  }
+
+  function P(tau) {
+    return (c * tau) / (1 - tau) + tau;
+  }
+
+  function psi(sigma) {
+    return alpha * Math.exp(2 * sigma);
+  }
+
+  function piM(tau) {
+    return P(tau) * (1 - R(tau));
+  }
+
+  // Pure marketplace marginal profit (Pi^M)'(tau)
+  function piM_prime(tau) {
+    const q = 1 - tau;
+    const P_tau = 1 + c / (q * q);
+    const R_val = R(tau);
+    const R_tau = R_val * (1 / q + c / (q * q));
+    return P_tau * (1 - R_val) - P(tau) * R_tau;
+  }
+
+  // Joint tau-FOC at sigma = sigma(tau): term1 + term2 + term3
+  function jointTauFOC(tau) {
+    const sigma = sigmaOfTau(tau);
+    const sA_val = sA(sigma, tau);
+    const q = 1 - tau;
+    const term1 = sA_val * tau / q;
+    const term2 = piM_prime(tau); // = (1 + c/q^2)(1-R) - P R (1/q + c/q^2)
+    return term1 + term2;
+  }
+
+  // Find static joint optimum tau* via bisection over feasible interval
+  function findTauStar() {
+    let lo = 0.0001;
+    let hi = 0.95;
+    // Restrict hi to where sigmaOfTau is finite and sA < 1
+    while (hi > lo) {
+      const sig = sigmaOfTau(hi);
+      const s = sA(sig, hi);
+      if (Number.isFinite(s) && s < 1 && Number.isFinite(sig)) break;
+      hi -= 0.01;
+    }
+    if (hi <= lo) return null;
+
+    let fLo = jointTauFOC(lo);
+    let fHi = jointTauFOC(hi);
+    // If no sign change, scan
+    if (!(fLo * fHi < 0)) {
+      // try to find one
+      let found = false;
+      let prev_tau = lo, prev_f = fLo;
+      for (let t = lo + 0.001; t <= hi; t += 0.001) {
+        const f = jointTauFOC(t);
+        if (prev_f * f < 0) {
+          lo = prev_tau; hi = t; fLo = prev_f; fHi = f;
+          found = true;
+          break;
+        }
+        prev_tau = t; prev_f = f;
+      }
+      if (!found) return null;
+    }
+    for (let i = 0; i < 200; i++) {
+      const mid = 0.5 * (lo + hi);
+      const fMid = jointTauFOC(mid);
+      if (Math.abs(fMid) < 1e-12 || Math.abs(hi - lo) < 1e-12) return mid;
+      if (fLo * fMid < 0) { hi = mid; fHi = fMid; } else { lo = mid; fLo = fMid; }
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  // Find pure-marketplace tau^M via bisection on piM'(tau) = 0
+  function findTauM() {
+    let lo = 0.0001;
+    let hi = 0.95;
+    while (hi > lo) {
+      const r = R(hi);
+      if (Number.isFinite(r) && r > 0) break;
+      hi -= 0.01;
+    }
+    let fLo = piM_prime(lo);
+    let fHi = piM_prime(hi);
+    if (!(fLo * fHi < 0)) {
+      let prev_tau = lo, prev_f = fLo;
+      let found = false;
+      for (let t = lo + 0.001; t <= hi; t += 0.001) {
+        const f = piM_prime(t);
+        if (prev_f * f < 0) { lo = prev_tau; hi = t; fLo = prev_f; fHi = f; found = true; break; }
+        prev_tau = t; prev_f = f;
+      }
+      if (!found) return null;
+    }
+    for (let i = 0; i < 200; i++) {
+      const mid = 0.5 * (lo + hi);
+      const fMid = piM_prime(mid);
+      if (Math.abs(fMid) < 1e-12) return mid;
+      if (fLo * fMid < 0) { hi = mid; fHi = fMid; } else { lo = mid; fLo = fMid; }
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  // Welfare W(tau) = ln D = ln(1-tau) + v - c/(1-tau) - 1 - ln F
+  function W(tau) {
+    return Math.log(1 - tau) + v - c / (1 - tau) - 1 - Math.log(F);
+  }
+
+  // Entry threshold theta^e under same-period convention
+  function thetaE(m_val) {
+    return (K * (1 - delta)) / m_val;
+  }
+
+  // Y^e under uniform G on [0,1] given theta^e (clipped)
+  function YeFromTheta(theta_e) {
+    if (theta_e <= 0) return 0.5; // all categories profitable
+    if (theta_e >= 1) return 0;
+    return (1 - theta_e * theta_e) / 2;
+  }
+  function muFromTheta(theta_e) {
+    if (theta_e <= 0) return 1;
+    if (theta_e >= 1) return 0;
+    return 1 - theta_e;
+  }
+
+  // Dynamic steady-state tau_ss: solve Theta * piM'(tau) + Y_ss(tau) * s_{A,tau}(sigma*, tau) = 0
+  // with sigma fixed at sigma* (the static optimum)
+  function findTauSS(sigmaStar) {
+    function residual(tau) {
+      const sA_val = sA(sigmaStar, tau);
+      const psi_val = psi(sigmaStar);
+      const m_val = sA_val - psi_val;
+      if (m_val <= 0) return null;
+      const theta_e = thetaE(m_val);
+      const Y_val = YeFromTheta(theta_e);
+      const sA_tau = sA_val * tau / (1 - tau);
+      return Theta * piM_prime(tau) + Y_val * sA_tau;
+    }
+    let lo = 0.0001, hi = 0.95;
+    while (hi > lo) {
+      const r = residual(hi);
+      if (r !== null && Number.isFinite(r)) break;
+      hi -= 0.01;
+    }
+    let fLo = residual(lo), fHi = residual(hi);
+    if (!(fLo !== null && fHi !== null && fLo * fHi < 0)) {
+      let found = false;
+      let prev_tau = lo, prev_f = fLo;
+      for (let t = lo + 0.001; t <= hi; t += 0.001) {
+        const f = residual(t);
+        if (f === null) continue;
+        if (prev_f !== null && prev_f * f < 0) {
+          lo = prev_tau; hi = t; fLo = prev_f; fHi = f; found = true; break;
+        }
+        prev_tau = t; prev_f = f;
+      }
+      if (!found) return null;
+    }
+    for (let i = 0; i < 200; i++) {
+      const mid = 0.5 * (lo + hi);
+      const fMid = residual(mid);
+      if (fMid === null) return null;
+      if (Math.abs(fMid) < 1e-12) return mid;
+      if (fLo * fMid < 0) { hi = mid; fHi = fMid; } else { lo = mid; fLo = fMid; }
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  // Dynamic period-zero tau^0: solve Theta * piM'(tau) + lambda * Y^e(tau) * s_{A,tau}(sigma*, tau) = 0
+  function findTauZero(sigmaStar) {
+    function residual(tau) {
+      const sA_val = sA(sigmaStar, tau);
+      const psi_val = psi(sigmaStar);
+      const m_val = sA_val - psi_val;
+      if (m_val <= 0) return null;
+      const theta_e = thetaE(m_val);
+      const Ye_val = YeFromTheta(theta_e);
+      const sA_tau = sA_val * tau / (1 - tau);
+      return Theta * piM_prime(tau) + lambda * Ye_val * sA_tau;
+    }
+    let lo = 0.0001, hi = 0.95;
+    while (hi > lo) {
+      const r = residual(hi);
+      if (r !== null && Number.isFinite(r)) break;
+      hi -= 0.01;
+    }
+    let fLo = residual(lo), fHi = residual(hi);
+    if (!(fLo !== null && fHi !== null && fLo * fHi < 0)) {
+      let found = false;
+      let prev_tau = lo, prev_f = fLo;
+      for (let t = lo + 0.001; t <= hi; t += 0.001) {
+        const f = residual(t);
+        if (f === null) continue;
+        if (prev_f !== null && prev_f * f < 0) {
+          lo = prev_tau; hi = t; fLo = prev_f; fHi = f; found = true; break;
+        }
+        prev_tau = t; prev_f = f;
+      }
+      if (!found) return null;
+    }
+    for (let i = 0; i < 200; i++) {
+      const mid = 0.5 * (lo + hi);
+      const fMid = residual(mid);
+      if (fMid === null) return null;
+      if (Math.abs(fMid) < 1e-12) return mid;
+      if (fLo * fMid < 0) { hi = mid; fHi = fMid; } else { lo = mid; fLo = fMid; }
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  return {
+    Theta, sigmaOfTau, sA, R, P, psi, piM, piM_prime,
+    findTauStar, findTauM, findTauSS, findTauZero,
+    W, thetaE, YeFromTheta, muFromTheta
+  };
+}
+
+// ============================================================================
+// UI wiring
+// ============================================================================
+
+const DEFAULTS = {
+  c: 8,
+  F: 0.3094478571,
+  v: 13.1753747156,
+  alpha: 0.1340640092,
+  delta: 0.95,
+  lambda: 0.5,
+  K: 1
+};
+
+const PARAMS = ['c', 'F', 'v', 'alpha', 'delta', 'lambda', 'K'];
+
+function getParams() {
+  const p = {};
+  PARAMS.forEach(k => { p[k] = parseFloat(document.getElementById(k).value); });
+  return p;
+}
+
+function setParams(p) {
+  PARAMS.forEach(k => { document.getElementById(k).value = p[k]; });
+}
+
+function fmt(x, d = 4) {
+  if (x === null || x === undefined || !Number.isFinite(x)) return "—";
+  return Number(x).toFixed(d);
+}
+
+function resetDefaults() {
+  setParams(DEFAULTS);
+  update();
+}
+
+function showWarning(msg) {
+  const el = document.getElementById("warn");
+  el.textContent = msg;
+  el.classList.add("show");
+}
+function clearWarning() {
+  document.getElementById("warn").classList.remove("show");
+}
+
+function update() {
+  // Update slider labels
+  PARAMS.forEach(k => {
+    const v = parseFloat(document.getElementById(k).value);
+    const labelEl = document.getElementById(k + "-val");
+    if (k === 'F' || k === 'alpha') labelEl.textContent = v.toFixed(5);
+    else if (k === 'lambda' || k === 'delta') labelEl.textContent = v.toFixed(2);
+    else if (k === 'K') labelEl.textContent = v.toFixed(2);
+    else labelEl.textContent = v.toFixed(2);
+  });
+
+  const params = getParams();
+  const M = makeModel(params);
+
+  const tauStar = M.findTauStar();
+  const tauM = M.findTauM();
+
+  if (tauStar === null) {
+    showWarning("No interior static optimum found. Try moving parameters back toward the defaults.");
+    return;
+  }
+  clearWarning();
+
+  const sigmaStar = M.sigmaOfTau(tauStar);
+  const sA_star = M.sA(sigmaStar, tauStar);
+  const R_star = M.R(tauStar);
+  const sS_star = 1 - sA_star - R_star;
+  const psi_star = M.psi(sigmaStar);
+  const m_star = sA_star - psi_star;
+  const P_star = M.P(tauStar);
+  const N_star = (1 - tauStar) * sS_star / params.F;
+
+  const ownProfit = (1 + P_star) * sA_star - psi_star;
+  const feeRevenue = P_star * sS_star;
+  const Pi_total = ownProfit + feeRevenue;
+
+  const W_star = M.W(tauStar);
+  const W_M = (tauM !== null) ? M.W(tauM) : null;
+
+  // Dynamic
+  const theta_e_static = (m_star > 0) ? M.thetaE(m_star) : null;
+  const mu_static = (theta_e_static !== null) ? M.muFromTheta(theta_e_static) : null;
+  const Y_static = (theta_e_static !== null) ? M.YeFromTheta(theta_e_static) : null;
+
+  const tauSS = M.findTauSS(sigmaStar);
+  const tau0 = M.findTauZero(sigmaStar);
+  const W_SS = (tauSS !== null) ? M.W(tauSS) : null;
+  const W_0 = (tau0 !== null) ? M.W(tau0) : null;
+  const welfareLoss = (W_M !== null && W_SS !== null) ? M.Theta * (W_M - W_SS) : null;
+
+  // Transition path under static fee (mu_t, Y_t starting from 0)
+  const T_max = 20;
+  const traj_t = [], traj_mu = [], traj_Y = [];
+  if (mu_static !== null && Y_static !== null) {
+    for (let t = 0; t <= T_max; t++) {
+      const f = 1 - Math.pow(1 - params.lambda, t);
+      traj_t.push(t);
+      traj_mu.push(mu_static * f);
+      traj_Y.push(Y_static * f);
+    }
+  }
+
+  // Render results table
+  const rows = [
+    { section: "Static optimum" },
+    { label: "$\\sigma^*$ (visibility)", val: fmt(sigmaStar) },
+    { label: "$\\tau^*$ (fee)", val: fmt(tauStar), highlight: true },
+    { label: "$s_A$ (platform share)", val: fmt(sA_star), highlight: true },
+    { label: "$s_S$ (fringe share)", val: fmt(sS_star), highlight: true },
+    { label: "$s_0$ (outside share, $R$)", val: fmt(R_star), highlight: true },
+    { label: "$N$ (fringe sellers)", val: fmt(N_star) },
+    { label: "$m = s_A - \\psi(\\sigma^*)$", val: fmt(m_star) },
+    { section: "Profit decomposition" },
+    { label: "Own-product profit", val: fmt(ownProfit) },
+    { label: "Fee revenue", val: fmt(feeRevenue) },
+    { label: "Total $\\Pi^*$", val: fmt(Pi_total) },
+    { label: "Own-product share of profit", val: fmt(ownProfit / Pi_total, 3) },
+    { section: "Welfare" },
+    { label: "$W(\\tau^*)$ (consumer surplus)", val: fmt(W_star) },
+    { label: "$W(\\tau^M)$ (pure-marketplace)", val: fmt(W_M) },
+    { label: "$\\tau^M$", val: fmt(tauM) },
+    { section: "Dynamic steady state" },
+    { label: "$\\theta^e$ (entry threshold)", val: fmt(theta_e_static) },
+    { label: "$\\mu_{ss}$ (fraction of categories entered)", val: fmt(mu_static, 4) },
+    { label: "$Y_{ss}$ (size-weighted footprint)", val: fmt(Y_static, 4) },
+    { label: "$\\tau_{ss}$ (steady-state fee)", val: fmt(tauSS, 6), highlight: true },
+    { label: "$\\tau^0$ (period-zero fee)", val: fmt(tau0, 6) },
+    { label: "$\\tau^M$ (pure-marketplace fee)", val: fmt(tauM, 6) },
+    { section: "Welfare under the dynamic transition" },
+    { label: "$W(\\tau^M) - W(\\tau_{ss})$", val: fmt((W_M !== null && W_SS !== null) ? W_M - W_SS : null, 6) },
+    { label: "$\\Delta \\mathcal W_{ss} = \\bar\\Theta\\,[W(\\tau^M) - W(\\tau_{ss})]$", val: fmt(welfareLoss, 6), highlight: true }
+  ];
+
+  const tbl = document.getElementById("results-table");
+  tbl.innerHTML = "";
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    if (r.section) {
+      tr.classList.add("section-row");
+      const td = document.createElement("td");
+      td.colSpan = 2;
+      td.textContent = r.section;
+      tr.appendChild(td);
+    } else {
+      if (r.highlight) tr.classList.add("highlight");
+      const th = document.createElement("th");
+      th.innerHTML = r.label;
+      const td = document.createElement("td");
+      td.textContent = r.val;
+      tr.appendChild(th); tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  });
+  if (window.renderMathInElement) {
+    renderMathInElement(tbl, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+  }
+
+  // Plot transition path
+  Plotly.react("plot-transition", [
+    {
+      x: traj_t, y: traj_mu, name: "μ_t (fraction of categories entered)",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#1F4E79", width: 2 }, marker: { size: 5 }
+    },
+    {
+      x: traj_t, y: traj_Y, name: "Y_t (size-weighted footprint)",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#8A1538", width: 2 }, marker: { size: 5 }
+    }
+  ], {
+    title: { text: "Dynamic transition path (starting from no footprint)", font: { size: 14 } },
+    xaxis: { title: "Period t" },
+    yaxis: { title: "State variables", range: [0, 1] },
+    legend: { orientation: "h", y: -0.25 },
+    margin: { l: 50, r: 30, t: 40, b: 60 },
+    height: 320
+  }, { displayModeBar: false, responsive: true });
+
+  // Plot fee comparison
+  if (tauM !== null && tau0 !== null && tauSS !== null && tauStar !== null) {
+    Plotly.react("plot-fees", [
+      {
+        x: ["τ^M (pure marketplace)", "τ^0 (period zero)", "τ_ss (steady state)", "τ* (one-shot static joint)"],
+        y: [tauM, tau0, tauSS, tauStar],
+        type: "bar",
+        marker: { color: ["#1B6B4A", "#1F4E79", "#8A1538", "#4A5568"] },
+        text: [tauM, tau0, tauSS, tauStar].map(x => x.toFixed(6)),
+        textposition: "outside"
+      }
+    ], {
+      title: { text: "Fee benchmarks at current parameters", font: { size: 14 } },
+      yaxis: { title: "Fee τ" },
+      margin: { l: 50, r: 30, t: 40, b: 60 },
+      height: 320
+    }, { displayModeBar: false, responsive: true });
+  }
+}
+
+PARAMS.forEach(k => {
+  document.getElementById(k).addEventListener("input", update);
+});
+
+document.addEventListener("DOMContentLoaded", update);
+</script>
+
+</body>
+</html>
