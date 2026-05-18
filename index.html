@@ -699,20 +699,55 @@ function update() {
 
   // Plot fee comparison
   if (tauM !== null && tau0 !== null && tauSS !== null && tauStar !== null) {
+    const feeData = [
+      { name: "τ<sup>M</sup>   pure marketplace",        val: tauM,    color: "#1B6B4A" },
+      { name: "τ<sup>0</sup>   period-zero dynamic",     val: tau0,    color: "#1F4E79" },
+      { name: "τ<sub>ss</sub>  steady-state dynamic",    val: tauSS,   color: "#8A1538" },
+      { name: "τ*   one-shot static joint",              val: tauStar, color: "#6B7280" }
+    ];
+    const maxFee = Math.max(...feeData.map(d => d.val));
+    const xMax = Math.max(maxFee * 1.25, maxFee + 0.05);
     Plotly.react("plot-fees", [
       {
-        x: ["τ^M (pure marketplace)", "τ^0 (period zero)", "τ_ss (steady state)", "τ* (one-shot static joint)"],
-        y: [tauM, tau0, tauSS, tauStar],
+        x: feeData.map(d => d.val),
+        y: feeData.map(d => d.name),
         type: "bar",
-        marker: { color: ["#1B6B4A", "#1F4E79", "#8A1538", "#4A5568"] },
-        text: [tauM, tau0, tauSS, tauStar].map(x => x.toFixed(6)),
-        textposition: "outside"
+        orientation: "h",
+        marker: {
+          color: feeData.map(d => d.color),
+          line: { color: "#ffffff", width: 1 }
+        },
+        text: feeData.map(d => d.val.toFixed(6)),
+        textposition: "outside",
+        textfont: { size: 12, color: "#1a1a1a" },
+        cliponaxis: false,
+        hovertemplate: "%{y}<br>τ = %{x:.6f}<extra></extra>",
+        width: 0.6
       }
     ], {
-      title: { text: "Fee benchmarks at current parameters", font: { size: 14 } },
-      yaxis: { title: "Fee τ" },
-      margin: { l: 50, r: 30, t: 40, b: 60 },
-      height: 320
+      title: {
+        text: "Fee benchmarks at current parameters",
+        font: { size: 14 },
+        x: 0.02, xanchor: "left"
+      },
+      xaxis: {
+        title: { text: "Fee τ", font: { size: 12 } },
+        range: [0, xMax],
+        zeroline: true,
+        zerolinecolor: "#999",
+        gridcolor: "#eee",
+        tickfont: { size: 11 }
+      },
+      yaxis: {
+        automargin: true,
+        tickfont: { size: 12 },
+        autorange: "reversed"
+      },
+      margin: { l: 10, r: 60, t: 40, b: 50 },
+      height: 320,
+      plot_bgcolor: "#fff",
+      paper_bgcolor: "#fff",
+      bargap: 0.35
     }, { displayModeBar: false, responsive: true });
   }
 }
