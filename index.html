@@ -268,6 +268,24 @@
       <div id="plot-transition"></div>
     </div>
     <div class="plot-container">
+      <div id="plot-profit"></div>
+    </div>
+    <div class="plot-container">
+      <div id="plot-welfare"></div>
+    </div>
+    <div class="plot-container">
+      <div id="plot-sellers"></div>
+    </div>
+    <div class="plot-container">
+      <div id="plot-shares"></div>
+    </div>
+    <div class="plot-container">
+      <div id="plot-entry-flow"></div>
+    </div>
+    <div class="plot-container">
+      <div id="plot-cumloss"></div>
+    </div>
+    <div class="plot-container">
       <div id="plot-fees"></div>
     </div>
   </div>
@@ -507,9 +525,46 @@ function makeModel(p) {
     return 0.5 * (lo + hi);
   }
 
+  // General: optimal tau at any post-entry footprint Y_next, holding sigma at sigmaStar
+  // FOC: Theta * piM'(tau) + Y_next * s_{A,tau}(sigmaStar, tau) = 0
+  function tauAtFootprint(Y_next, sigmaStar) {
+    function residual(tau) {
+      const sA_val = sA(sigmaStar, tau);
+      const sA_tau = sA_val * tau / (1 - tau);
+      return Theta * piM_prime(tau) + Y_next * sA_tau;
+    }
+    let lo = 0.0001, hi = 0.95;
+    while (hi > lo) {
+      const r = residual(hi);
+      if (Number.isFinite(r)) break;
+      hi -= 0.01;
+    }
+    let fLo = residual(lo), fHi = residual(hi);
+    if (!(Number.isFinite(fLo) && Number.isFinite(fHi) && fLo * fHi < 0)) {
+      let found = false, prev_tau = lo, prev_f = fLo;
+      for (let t = lo + 0.001; t <= hi; t += 0.001) {
+        const f = residual(t);
+        if (!Number.isFinite(f)) continue;
+        if (Number.isFinite(prev_f) && prev_f * f < 0) {
+          lo = prev_tau; hi = t; fLo = prev_f; fHi = f; found = true; break;
+        }
+        prev_tau = t; prev_f = f;
+      }
+      if (!found) return null;
+    }
+    for (let i = 0; i < 100; i++) {
+      const mid = 0.5 * (lo + hi);
+      const fMid = residual(mid);
+      if (!Number.isFinite(fMid)) return null;
+      if (Math.abs(fMid) < 1e-12) return mid;
+      if (fLo * fMid < 0) { hi = mid; fHi = fMid; } else { lo = mid; fLo = fMid; }
+    }
+    return 0.5 * (lo + hi);
+  }
+
   return {
     Theta, sigmaOfTau, sA, R, P, psi, piM, piM_prime,
-    findTauStar, findTauM, findTauSS, findTauZero,
+    findTauStar, findTauM, findTauSS, findTauZero, tauAtFootprint,
     W, thetaE, YeFromTheta, muFromTheta
   };
 }
@@ -609,15 +664,68 @@ function update() {
   const W_0 = (tau0 !== null) ? M.W(tau0) : null;
   const welfareLoss = (W_M !== null && W_SS !== null) ? M.Theta * (W_M - W_SS) : null;
 
-  // Transition path under static fee (mu_t, Y_t starting from 0)
-  const T_max = 20;
-  const traj_t = [], traj_mu = [], traj_Y = [];
+  // ------------------------------------------------------------------
+  // Full dynamic trajectory: tau_t set at each period to the optimum at
+  // post-entry footprint Y_{t+1}, then all other variables derived.
+  // ------------------------------------------------------------------
+  const T_max = 30;
+  const traj_t = [], traj_mu = [], traj_Y = [], traj_tau = [],
+        traj_W = [], traj_Pi = [], traj_ownProf = [], traj_feeRev = [],
+        traj_N = [], traj_aggSA = [], traj_aggSS = [], traj_aggR = [],
+        traj_entryFlow = [], traj_cumLoss = [];
   if (mu_static !== null && Y_static !== null) {
+    let cumLoss = 0;
+    let prev_Y = 0;
     for (let t = 0; t <= T_max; t++) {
       const f = 1 - Math.pow(1 - params.lambda, t);
+      const f_next = 1 - Math.pow(1 - params.lambda, t + 1);
+      const Y_t_val  = Y_static * f;
+      const mu_t_val = mu_static * f;
+      const Y_next   = Y_static * f_next;
+      const tau_t = M.tauAtFootprint(Y_next, sigmaStar);
+      if (tau_t === null || !Number.isFinite(tau_t)) continue;
+
+      const sA_t  = M.sA(sigmaStar, tau_t);
+      const R_t   = M.R(tau_t);
+      const sS_h  = Math.max(0, 1 - sA_t - R_t);
+      const sS_p  = Math.max(0, 1 - R_t);
+      const P_t   = M.P(tau_t);
+      const m_t   = sA_t - M.psi(sigmaStar);
+      const W_t_v = M.W(tau_t);
+
+      const ownProf_t = Y_t_val * m_t;
+      const feeRev_t  = M.Theta * P_t * (1 - R_t);
+      const Pi_t      = ownProf_t + feeRev_t;
+
+      if (W_M !== null) {
+        cumLoss += Math.pow(params.delta, t) * M.Theta * (W_M - W_t_v);
+      }
+
+      const Ne_h = (1 - tau_t) * sS_h / params.F;
+      const Np_p = (1 - tau_t) * sS_p / params.F;
+      const N_t_val = Y_t_val * Ne_h + (M.Theta - Y_t_val) * Np_p;
+
+      const aggSA = Y_t_val * sA_t / M.Theta;
+      const aggSS = (Y_t_val * sS_h + (M.Theta - Y_t_val) * sS_p) / M.Theta;
+      const aggR  = R_t;
+
+      const dY = Y_t_val - prev_Y;
+      prev_Y = Y_t_val;
+
       traj_t.push(t);
-      traj_mu.push(mu_static * f);
-      traj_Y.push(Y_static * f);
+      traj_mu.push(mu_t_val);
+      traj_Y.push(Y_t_val);
+      traj_tau.push(tau_t);
+      traj_W.push(W_t_v);
+      traj_Pi.push(Pi_t);
+      traj_ownProf.push(ownProf_t);
+      traj_feeRev.push(feeRev_t);
+      traj_N.push(N_t_val);
+      traj_aggSA.push(aggSA);
+      traj_aggSS.push(aggSS);
+      traj_aggR.push(aggR);
+      traj_entryFlow.push(dY);
+      traj_cumLoss.push(cumLoss);
     }
   }
 
@@ -676,28 +784,123 @@ function update() {
     renderMathInElement(tbl, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
   }
 
-  // Plot transition path
-  Plotly.react("plot-transition", [
-    {
-      x: traj_t, y: traj_mu, name: "μ_t (fraction of categories entered)",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#1F4E79", width: 2 }, marker: { size: 5 }
-    },
-    {
-      x: traj_t, y: traj_Y, name: "Y_t (size-weighted footprint)",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#8A1538", width: 2 }, marker: { size: 5 }
-    }
-  ], {
-    title: { text: "Dynamic transition path (starting from no footprint)", font: { size: 14 } },
-    xaxis: { title: "Period t" },
-    yaxis: { title: "State variables", range: [0, 1] },
-    legend: { orientation: "h", y: -0.25 },
-    margin: { l: 50, r: 30, t: 40, b: 60 },
-    height: 320
-  }, { displayModeBar: false, responsive: true });
+  // Common Plotly layout pieces
+  const baseLayout = {
+    margin: { l: 60, r: 30, t: 40, b: 55 },
+    height: 320,
+    plot_bgcolor: "#fff",
+    paper_bgcolor: "#fff",
+    xaxis: { title: { text: "Period t", font: { size: 12 } }, gridcolor: "#eee", zerolinecolor: "#999" },
+    legend: { orientation: "h", y: -0.22, font: { size: 11 } }
+  };
+  function L(overrides) {
+    return Object.assign({}, baseLayout, overrides, {
+      xaxis: Object.assign({}, baseLayout.xaxis, overrides.xaxis || {}),
+      yaxis: Object.assign({ gridcolor: "#eee", zerolinecolor: "#999" }, overrides.yaxis || {}),
+      title: Object.assign({ font: { size: 14 }, x: 0.02, xanchor: "left" }, overrides.title || {})
+    });
+  }
+  const cfg = { displayModeBar: false, responsive: true };
 
-  // Plot fee comparison
+  // Plot 1 — transition path (μ_t, Y_t)
+  Plotly.react("plot-transition", [
+    { x: traj_t, y: traj_mu, name: "μ_t (fraction of categories entered)",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#1F4E79", width: 2 }, marker: { size: 5 } },
+    { x: traj_t, y: traj_Y, name: "Y_t (size-weighted footprint)",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
+  ], L({
+    title: { text: "Dynamic transition path (starting from no footprint)" },
+    yaxis: { title: "State variables", range: [0, 1] }
+  }), cfg);
+
+  // Plot 2 — platform profit decomposition (stacked area)
+  Plotly.react("plot-profit", [
+    { x: traj_t, y: traj_feeRev, name: "Fee revenue (Θ · π^M(τ_t))",
+      type: "scatter", mode: "lines", stackgroup: "p",
+      fillcolor: "rgba(31, 78, 121, 0.55)",
+      line: { color: "#1F4E79", width: 1.5 } },
+    { x: traj_t, y: traj_ownProf, name: "Own-product profit (Y_t · m(τ_t))",
+      type: "scatter", mode: "lines", stackgroup: "p",
+      fillcolor: "rgba(138, 21, 56, 0.55)",
+      line: { color: "#8A1538", width: 1.5 } }
+  ], L({
+    title: { text: "Platform profit decomposition" },
+    yaxis: { title: "Π_t per period" }
+  }), cfg);
+
+  // Plot 3 — consumer welfare per category, with τ^M benchmark
+  const welfareTraces = [
+    { x: traj_t, y: traj_W, name: "W(τ_t) (consumer surplus, per category)",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
+  ];
+  if (W_M !== null) {
+    welfareTraces.push({
+      x: traj_t, y: traj_t.map(() => W_M),
+      name: "W(τ^M) pure-marketplace benchmark",
+      type: "scatter", mode: "lines",
+      line: { color: "#1B6B4A", width: 1.5, dash: "dash" }
+    });
+  }
+  Plotly.react("plot-welfare", welfareTraces, L({
+    title: { text: "Consumer welfare W(τ_t)" },
+    yaxis: { title: "W = ln D" }
+  }), cfg);
+
+  // Plot 4 — number of third-party sellers (aggregate)
+  Plotly.react("plot-sellers", [
+    { x: traj_t, y: traj_N, name: "Aggregate fringe-seller mass N_t",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#1F4E79", width: 2 }, marker: { size: 5 },
+      fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.12)" }
+  ], L({
+    title: { text: "Third-party sellers over time" },
+    yaxis: { title: "N_t (aggregate)" }
+  }), cfg);
+
+  // Plot 5 — aggregate market shares (stacked area)
+  Plotly.react("plot-shares", [
+    { x: traj_t, y: traj_aggSA, name: "Amazon (s_A)",
+      type: "scatter", mode: "lines", stackgroup: "s",
+      fillcolor: "rgba(138, 21, 56, 0.60)",
+      line: { color: "#8A1538", width: 1.5 } },
+    { x: traj_t, y: traj_aggSS, name: "Fringe (s_S)",
+      type: "scatter", mode: "lines", stackgroup: "s",
+      fillcolor: "rgba(31, 78, 121, 0.55)",
+      line: { color: "#1F4E79", width: 1.5 } },
+    { x: traj_t, y: traj_aggR, name: "Outside (R)",
+      type: "scatter", mode: "lines", stackgroup: "s",
+      fillcolor: "rgba(160, 160, 160, 0.55)",
+      line: { color: "#6B7280", width: 1.5 } }
+  ], L({
+    title: { text: "Aggregate market shares (averaged across categories)" },
+    yaxis: { title: "Share", range: [0, 1] }
+  }), cfg);
+
+  // Plot 6 — per-period entry flow
+  Plotly.react("plot-entry-flow", [
+    { x: traj_t, y: traj_entryFlow, name: "ΔY_t",
+      type: "bar",
+      marker: { color: "#1F4E79", line: { color: "#ffffff", width: 0.5 } } }
+  ], L({
+    title: { text: "Per-period entry flow ΔY_t" },
+    yaxis: { title: "New category mass entered" }
+  }), cfg);
+
+  // Plot 7 — cumulative discounted consumer welfare loss
+  Plotly.react("plot-cumloss", [
+    { x: traj_t, y: traj_cumLoss, name: "Σ_{s≤t} δ^s · Θ · [W(τ^M) − W(τ_s)]",
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#8A1538", width: 2 }, marker: { size: 5 },
+      fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.15)" }
+  ], L({
+    title: { text: "Cumulative consumer welfare loss (discounted)" },
+    yaxis: { title: "Σ δ^s · Θ · [W(τ^M) − W(τ_s)]" }
+  }), cfg);
+
+  // Plot 8 — fee benchmarks (static reference)
   if (tauM !== null && tau0 !== null && tauSS !== null && tauStar !== null) {
     const feeData = [
       { name: "τ<sup>M</sup>   pure marketplace",        val: tauM,    color: "#1B6B4A" },
