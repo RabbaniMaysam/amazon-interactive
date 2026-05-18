@@ -41,22 +41,24 @@
   }
   .layout {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 300px 1fr;
     gap: 16px;
   }
-  @media (max-width: 900px) {
+  @media (max-width: 760px) {
     .layout { grid-template-columns: 1fr; }
   }
   .left {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-width: 0;
   }
   .right {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
     gap: 16px;
     align-content: start;
+    min-width: 0;
   }
   .param-section-header {
     font-size: 12px;
@@ -809,10 +811,10 @@ function update() {
 
   // Plot 1 — transition path (μ_t, Y_t)
   Plotly.react("plot-transition", [
-    { x: traj_t, y: traj_mu, name: "μ_t (fraction of categories entered)",
+    { x: traj_t, y: traj_mu, name: "μ<sub>t</sub> (fraction of categories entered)",
       type: "scatter", mode: "lines+markers",
       line: { color: "#1F4E79", width: 2 }, marker: { size: 5 } },
-    { x: traj_t, y: traj_Y, name: "Y_t (size-weighted footprint)",
+    { x: traj_t, y: traj_Y, name: "Y<sub>t</sub> (size-weighted footprint)",
       type: "scatter", mode: "lines+markers",
       line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
   ], L({
@@ -822,60 +824,60 @@ function update() {
 
   // Plot 2 — platform profit decomposition (stacked area)
   Plotly.react("plot-profit", [
-    { x: traj_t, y: traj_feeRev, name: "Fee revenue (Θ · π^M(τ_t))",
+    { x: traj_t, y: traj_feeRev, name: "Fee revenue  (Θ · π<sup>M</sup>(τ<sub>t</sub>))",
       type: "scatter", mode: "lines", stackgroup: "p",
       fillcolor: "rgba(31, 78, 121, 0.55)",
       line: { color: "#1F4E79", width: 1.5 } },
-    { x: traj_t, y: traj_ownProf, name: "Own-product profit (Y_t · m(τ_t))",
+    { x: traj_t, y: traj_ownProf, name: "Own-product profit  (Y<sub>t</sub> · m(τ<sub>t</sub>))",
       type: "scatter", mode: "lines", stackgroup: "p",
       fillcolor: "rgba(138, 21, 56, 0.55)",
       line: { color: "#8A1538", width: 1.5 } }
   ], L({
     title: { text: "Platform profit decomposition" },
-    yaxis: { title: "Π_t per period" }
+    yaxis: { title: "Π<sub>t</sub> per period" }
   }), cfg);
 
   // Plot 3 — consumer welfare per category, with τ^M benchmark
   const welfareTraces = [
-    { x: traj_t, y: traj_W, name: "W(τ_t) (consumer surplus, per category)",
+    { x: traj_t, y: traj_W, name: "W(τ<sub>t</sub>)  consumer surplus per category",
       type: "scatter", mode: "lines+markers",
       line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
   ];
   if (W_M !== null) {
     welfareTraces.push({
       x: traj_t, y: traj_t.map(() => W_M),
-      name: "W(τ^M) pure-marketplace benchmark",
+      name: "W(τ<sup>M</sup>)  pure-marketplace benchmark",
       type: "scatter", mode: "lines",
       line: { color: "#1B6B4A", width: 1.5, dash: "dash" }
     });
   }
   Plotly.react("plot-welfare", welfareTraces, L({
-    title: { text: "Consumer welfare W(τ_t)" },
+    title: { text: "Consumer welfare W(τ<sub>t</sub>)" },
     yaxis: { title: "W = ln D" }
   }), cfg);
 
   // Plot 4 — number of third-party sellers (aggregate)
   Plotly.react("plot-sellers", [
-    { x: traj_t, y: traj_N, name: "Aggregate fringe-seller mass N_t",
+    { x: traj_t, y: traj_N, name: "Aggregate fringe-seller mass N<sub>t</sub>",
       type: "scatter", mode: "lines+markers",
       line: { color: "#1F4E79", width: 2 }, marker: { size: 5 },
       fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.12)" }
   ], L({
     title: { text: "Third-party sellers over time" },
-    yaxis: { title: "N_t (aggregate)" }
+    yaxis: { title: "N<sub>t</sub>  (aggregate)" }
   }), cfg);
 
   // Plot 5 — aggregate market shares (stacked area)
   Plotly.react("plot-shares", [
-    { x: traj_t, y: traj_aggSA, name: "Amazon (s_A)",
+    { x: traj_t, y: traj_aggSA, name: "Amazon  (s<sub>A</sub>)",
       type: "scatter", mode: "lines", stackgroup: "s",
       fillcolor: "rgba(138, 21, 56, 0.60)",
       line: { color: "#8A1538", width: 1.5 } },
-    { x: traj_t, y: traj_aggSS, name: "Fringe (s_S)",
+    { x: traj_t, y: traj_aggSS, name: "Fringe  (s<sub>S</sub>)",
       type: "scatter", mode: "lines", stackgroup: "s",
       fillcolor: "rgba(31, 78, 121, 0.55)",
       line: { color: "#1F4E79", width: 1.5 } },
-    { x: traj_t, y: traj_aggR, name: "Outside (R)",
+    { x: traj_t, y: traj_aggR, name: "Outside  (R)",
       type: "scatter", mode: "lines", stackgroup: "s",
       fillcolor: "rgba(160, 160, 160, 0.55)",
       line: { color: "#6B7280", width: 1.5 } }
@@ -886,23 +888,23 @@ function update() {
 
   // Plot 6 — per-period entry flow
   Plotly.react("plot-entry-flow", [
-    { x: traj_t, y: traj_entryFlow, name: "ΔY_t",
+    { x: traj_t, y: traj_entryFlow, name: "ΔY<sub>t</sub>",
       type: "bar",
       marker: { color: "#1F4E79", line: { color: "#ffffff", width: 0.5 } } }
   ], L({
-    title: { text: "Per-period entry flow ΔY_t" },
+    title: { text: "Per-period entry flow ΔY<sub>t</sub>" },
     yaxis: { title: "New category mass entered" }
   }), cfg);
 
   // Plot 7 — cumulative discounted consumer welfare loss
   Plotly.react("plot-cumloss", [
-    { x: traj_t, y: traj_cumLoss, name: "Σ_{s≤t} δ^s · Θ · [W(τ^M) − W(τ_s)]",
+    { x: traj_t, y: traj_cumLoss, name: "Σ<sub>s≤t</sub> δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]",
       type: "scatter", mode: "lines+markers",
       line: { color: "#8A1538", width: 2 }, marker: { size: 5 },
       fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.15)" }
   ], L({
     title: { text: "Cumulative consumer welfare loss (discounted)" },
-    yaxis: { title: "Σ δ^s · Θ · [W(τ^M) − W(τ_s)]" }
+    yaxis: { title: "Σ δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]" }
   }), cfg);
 
   // Plot 8 — fee benchmarks (static reference)
