@@ -55,46 +55,10 @@
   }
   .right {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
     align-content: start;
     min-width: 0;
-  }
-  .fig-toggle-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .fig-toggle-list label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--ink);
-    cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 4px;
-  }
-  .fig-toggle-list label:hover {
-    background: var(--soft-blue);
-  }
-  .fig-toggle-list input[type="checkbox"] {
-    accent-color: var(--accent);
-    cursor: pointer;
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-  }
-  .fig-toggle-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px dashed var(--border);
-  }
-  .fig-toggle-actions button {
-    font-size: 12px;
-    padding: 4px 10px;
   }
   .param-section-header {
     font-size: 12px;
@@ -105,18 +69,86 @@
     padding-bottom: 4px;
     border-bottom: 1px dashed var(--border);
   }
-  .panel {
+  .panel,
+  .plot-container {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 16px 20px;
+    padding: 12px 16px;
+    transition: padding 0.15s ease;
   }
-  .panel h2 {
-    font-size: 15px;
-    margin: 0 0 12px 0;
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .panel-header h2,
+  .panel-header h3 {
+    margin: 0;
+    font-size: 14px;
     color: var(--accent);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .panel.collapsed,
+  .plot-container.collapsed {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .panel.collapsed > .panel-header,
+  .plot-container.collapsed > .panel-header {
+    margin-bottom: 0;
+  }
+  .panel.collapsed > .panel-body,
+  .plot-container.collapsed > .panel-body {
+    display: none;
+  }
+  /* toggle switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 16px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+  .switch .track {
+    position: absolute;
+    inset: 0;
+    background-color: #bbb;
+    transition: background-color 0.15s;
+    border-radius: 16px;
+  }
+  .switch .track::before {
+    content: "";
+    position: absolute;
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    top: 2px;
+    background-color: #fff;
+    transition: transform 0.15s;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .track {
+    background-color: var(--accent);
+  }
+  .switch input:checked + .track::before {
+    transform: translateX(14px);
   }
   .param {
     margin-bottom: 12px;
@@ -213,13 +245,6 @@
     color: var(--muted);
     margin-top: 8px;
   }
-  .plot-container {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 16px;
-  }
   .formula-block {
     background: var(--soft-blue);
     padding: 8px 12px;
@@ -247,77 +272,69 @@
 
     <!-- Parameters block (all sliders) -->
     <div class="panel">
-      <h2>Parameters</h2>
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h2>Parameters</h2>
+      </div>
+      <div class="panel-body">
 
-      <div class="param-section-header">Static</div>
+        <div class="param-section-header">Static</div>
 
-      <div class="param">
-        <div class="param-label"><span>$c$ — third-party marginal cost</span><span id="c-val">8.00</span></div>
-        <input type="range" id="c" min="1" max="15" step="0.05" value="8">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$F$ — third-party entry cost</span><span id="F-val">0.30945</span></div>
-        <input type="range" id="F" min="0.05" max="1" step="0.001" value="0.3094478571">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$v$ — intrinsic product value</span><span id="v-val">13.17537</span></div>
-        <input type="range" id="v" min="8" max="20" step="0.05" value="13.1753747156">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$\alpha$ — visibility-cost coefficient, $\psi(\sigma)=\alpha e^{2\sigma}$</span><span id="alpha-val">0.13406</span></div>
-        <input type="range" id="alpha" min="0.01" max="1" step="0.001" value="0.1340640092">
-      </div>
+        <div class="param">
+          <div class="param-label"><span>$c$ — third-party marginal cost</span><span id="c-val">8.00</span></div>
+          <input type="range" id="c" min="1" max="15" step="0.05" value="8">
+        </div>
+        <div class="param">
+          <div class="param-label"><span>$F$ — third-party entry cost</span><span id="F-val">0.30945</span></div>
+          <input type="range" id="F" min="0.05" max="1" step="0.001" value="0.3094478571">
+        </div>
+        <div class="param">
+          <div class="param-label"><span>$v$ — intrinsic product value</span><span id="v-val">13.17537</span></div>
+          <input type="range" id="v" min="8" max="20" step="0.05" value="13.1753747156">
+        </div>
+        <div class="param">
+          <div class="param-label"><span>$\alpha$ — visibility-cost coefficient, $\psi(\sigma)=\alpha e^{2\sigma}$</span><span id="alpha-val">0.13406</span></div>
+          <input type="range" id="alpha" min="0.01" max="1" step="0.001" value="0.1340640092">
+        </div>
 
-      <div class="param-section-header">Dynamic</div>
+        <div class="param-section-header">Dynamic</div>
 
-      <div class="param">
-        <div class="param-label"><span>$\delta$ — discount factor</span><span id="delta-val">0.95</span></div>
-        <input type="range" id="delta" min="0.5" max="0.999" step="0.001" value="0.95">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$\lambda$ — entry speed (fraction of gap closed per period)</span><span id="lambda-val">0.50</span></div>
-        <input type="range" id="lambda" min="0.05" max="1" step="0.01" value="0.5">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$K$ — platform entry cost per category</span><span id="K-val">1.00</span></div>
-        <input type="range" id="K" min="0.1" max="5" step="0.05" value="1">
-      </div>
+        <div class="param">
+          <div class="param-label"><span>$\delta$ — discount factor</span><span id="delta-val">0.95</span></div>
+          <input type="range" id="delta" min="0.5" max="0.999" step="0.001" value="0.95">
+        </div>
+        <div class="param">
+          <div class="param-label"><span>$\lambda$ — entry speed (fraction of gap closed per period)</span><span id="lambda-val">0.50</span></div>
+          <input type="range" id="lambda" min="0.05" max="1" step="0.01" value="0.5">
+        </div>
+        <div class="param">
+          <div class="param-label"><span>$K$ — platform entry cost per category</span><span id="K-val">1.00</span></div>
+          <input type="range" id="K" min="0.1" max="5" step="0.05" value="1">
+        </div>
 
-      <div class="actions" style="margin-top: 12px;">
-        <button onclick="resetDefaults()">Reset to paper calibration</button>
-      </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button onclick="resetDefaults()">Reset to paper calibration</button>
+        </div>
 
-      <div class="notes">
-        Category sizes $\theta_k$ are uniform on $[0,1]$ ($\bar\Theta = 0.5$). Identifying assumption: $c_A = c$.
+        <div class="notes">
+          Category sizes $\theta_k$ are uniform on $[0,1]$ ($\bar\Theta = 0.5$). Identifying assumption: $c_A = c$.
+        </div>
       </div>
     </div>
 
     <!-- Equilibrium outcomes block -->
     <div class="panel results">
-      <h2>Equilibrium outcomes</h2>
-      <table id="results-table">
-        <!-- filled by JS -->
-      </table>
-      <div class="notes">
-        Highlighted rows match the headline values reported in Section F (Numerical Calibration) of the manuscript.
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h2>Equilibrium outcomes</h2>
       </div>
-    </div>
-
-    <!-- Figure visibility toggles -->
-    <div class="panel">
-      <h2>Figures</h2>
-      <div class="fig-toggle-list">
-        <label><input type="checkbox" data-target="fig-transition"  checked> Transition path</label>
-        <label><input type="checkbox" data-target="fig-profit"      checked> Platform profit decomposition</label>
-        <label><input type="checkbox" data-target="fig-welfare"     checked> Consumer welfare W(&tau;<sub>t</sub>)</label>
-        <label><input type="checkbox" data-target="fig-sellers"     checked> Third-party sellers N<sub>t</sub></label>
-        <label><input type="checkbox" data-target="fig-shares"      checked> Aggregate market shares</label>
-        <label><input type="checkbox" data-target="fig-entry-flow"  checked> Per-period entry flow &Delta;Y<sub>t</sub></label>
-        <label><input type="checkbox" data-target="fig-cumloss"     checked> Cumulative welfare loss</label>
-      </div>
-      <div class="fig-toggle-actions">
-        <button onclick="setAllFigs(true)">All on</button>
-        <button class="secondary" onclick="setAllFigs(false)">All off</button>
+      <div class="panel-body">
+        <table id="results-table">
+          <!-- filled by JS -->
+        </table>
+        <div class="notes">
+          Highlighted rows match the headline values reported in Section F (Numerical Calibration) of the manuscript.
+        </div>
       </div>
     </div>
 
@@ -325,26 +342,54 @@
 
   <!-- RIGHT column: plots as separate blocks -->
   <div class="right">
-    <div class="plot-container" data-figure="fig-transition">
-      <div id="plot-transition"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Transition path</h3>
+      </div>
+      <div class="panel-body"><div id="plot-transition"></div></div>
     </div>
-    <div class="plot-container" data-figure="fig-profit">
-      <div id="plot-profit"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Platform profit decomposition</h3>
+      </div>
+      <div class="panel-body"><div id="plot-profit"></div></div>
     </div>
-    <div class="plot-container" data-figure="fig-welfare">
-      <div id="plot-welfare"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Consumer welfare W(&tau;<sub>t</sub>)</h3>
+      </div>
+      <div class="panel-body"><div id="plot-welfare"></div></div>
     </div>
-    <div class="plot-container" data-figure="fig-sellers">
-      <div id="plot-sellers"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Third-party sellers N<sub>t</sub></h3>
+      </div>
+      <div class="panel-body"><div id="plot-sellers"></div></div>
     </div>
-    <div class="plot-container" data-figure="fig-shares">
-      <div id="plot-shares"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Aggregate market shares</h3>
+      </div>
+      <div class="panel-body"><div id="plot-shares"></div></div>
     </div>
-    <div class="plot-container" data-figure="fig-entry-flow">
-      <div id="plot-entry-flow"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Per-period entry flow &Delta;Y<sub>t</sub></h3>
+      </div>
+      <div class="panel-body"><div id="plot-entry-flow"></div></div>
     </div>
-    <div class="plot-container" data-figure="fig-cumloss">
-      <div id="plot-cumloss"></div>
+    <div class="plot-container">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h3>Cumulative welfare loss</h3>
+      </div>
+      <div class="panel-body"><div id="plot-cumloss"></div></div>
     </div>
   </div>
 
@@ -844,19 +889,20 @@ function update() {
 
   // Common Plotly layout pieces
   const baseLayout = {
-    margin: { l: 60, r: 30, t: 40, b: 55 },
-    height: 320,
+    margin: { l: 50, r: 20, t: 12, b: 50 },
+    height: 280,
     plot_bgcolor: "#fff",
     paper_bgcolor: "#fff",
-    xaxis: { title: { text: "Period t", font: { size: 12 } }, gridcolor: "#eee", zerolinecolor: "#999" },
-    legend: { orientation: "h", y: -0.22, font: { size: 11 } }
+    xaxis: { title: { text: "Period t", font: { size: 11 } }, gridcolor: "#eee", zerolinecolor: "#999" },
+    legend: { orientation: "h", y: -0.22, font: { size: 10 } }
   };
   function L(overrides) {
-    return Object.assign({}, baseLayout, overrides, {
+    const out = Object.assign({}, baseLayout, overrides, {
       xaxis: Object.assign({}, baseLayout.xaxis, overrides.xaxis || {}),
-      yaxis: Object.assign({ gridcolor: "#eee", zerolinecolor: "#999" }, overrides.yaxis || {}),
-      title: Object.assign({ font: { size: 14 }, x: 0.02, xanchor: "left" }, overrides.title || {})
+      yaxis: Object.assign({ gridcolor: "#eee", zerolinecolor: "#999" }, overrides.yaxis || {})
     });
+    if (out.title === undefined) delete out.title;
+    return out;
   }
   const cfg = { displayModeBar: false, responsive: true };
 
@@ -869,7 +915,6 @@ function update() {
       type: "scatter", mode: "lines+markers",
       line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
   ], L({
-    title: { text: "Dynamic transition path (starting from no footprint)" },
     yaxis: { title: "State variables", range: [0, 1] }
   }), cfg);
 
@@ -884,7 +929,6 @@ function update() {
       fillcolor: "rgba(138, 21, 56, 0.55)",
       line: { color: "#8A1538", width: 1.5 } }
   ], L({
-    title: { text: "Platform profit decomposition" },
     yaxis: { title: "Π<sub>t</sub> per period" }
   }), cfg);
 
@@ -903,7 +947,6 @@ function update() {
     });
   }
   Plotly.react("plot-welfare", welfareTraces, L({
-    title: { text: "Consumer welfare W(τ<sub>t</sub>)" },
     yaxis: { title: "W = ln D" }
   }), cfg);
 
@@ -914,7 +957,6 @@ function update() {
       line: { color: "#1F4E79", width: 2 }, marker: { size: 5 },
       fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.12)" }
   ], L({
-    title: { text: "Third-party sellers over time" },
     yaxis: { title: "N<sub>t</sub>  (aggregate)" }
   }), cfg);
 
@@ -933,7 +975,6 @@ function update() {
       fillcolor: "rgba(160, 160, 160, 0.55)",
       line: { color: "#6B7280", width: 1.5 } }
   ], L({
-    title: { text: "Aggregate market shares (averaged across categories)" },
     yaxis: { title: "Share", range: [0, 1] }
   }), cfg);
 
@@ -943,7 +984,6 @@ function update() {
       type: "bar",
       marker: { color: "#1F4E79", line: { color: "#ffffff", width: 0.5 } } }
   ], L({
-    title: { text: "Per-period entry flow ΔY<sub>t</sub>" },
     yaxis: { title: "New category mass entered" }
   }), cfg);
 
@@ -954,7 +994,6 @@ function update() {
       line: { color: "#8A1538", width: 2 }, marker: { size: 5 },
       fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.15)" }
   ], L({
-    title: { text: "Cumulative consumer welfare loss (discounted)" },
     yaxis: { title: "Σ δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]" }
   }), cfg);
 
@@ -965,26 +1004,20 @@ PARAMS.forEach(k => {
 });
 
 // ----------------------------------------------------------------------------
-// Figure visibility toggles
+// Per-panel collapse toggles (the small "switch" in each panel header).
+// Clicking off collapses the panel to just its header bar.
 // ----------------------------------------------------------------------------
-function applyFigToggle(cb) {
-  const target = document.querySelector(`[data-figure="${cb.dataset.target}"]`);
-  if (!target) return;
-  target.style.display = cb.checked ? "" : "none";
-  if (cb.checked && window.Plotly) {
-    const plotDiv = target.querySelector('[id^="plot-"]');
-    if (plotDiv) Plotly.Plots.resize(plotDiv);
-  }
-}
-document.querySelectorAll('.fig-toggle-list input[type="checkbox"]').forEach(cb => {
-  cb.addEventListener("change", () => applyFigToggle(cb));
-});
-function setAllFigs(state) {
-  document.querySelectorAll('.fig-toggle-list input[type="checkbox"]').forEach(cb => {
-    cb.checked = state;
-    applyFigToggle(cb);
+document.querySelectorAll('.switch input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener("change", () => {
+    const block = cb.closest('.panel, .plot-container');
+    if (!block) return;
+    block.classList.toggle('collapsed', !cb.checked);
+    if (cb.checked && window.Plotly) {
+      const plotDiv = block.querySelector('[id^="plot-"]');
+      if (plotDiv) Plotly.Plots.resize(plotDiv);
+    }
   });
-}
+});
 
 document.addEventListener("DOMContentLoaded", update);
 </script>
