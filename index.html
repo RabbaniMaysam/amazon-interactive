@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Interactive Calibration — Amazon Brand Paper</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -22,7 +25,7 @@
   }
   * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     background: var(--bg);
     color: var(--ink);
     margin: 0;
@@ -55,9 +58,30 @@
   }
   .right {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 16px;
     align-content: start;
+    min-width: 0;
+  }
+  .figure-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .figure-toggles .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 6px;
+    font-size: 13px;
+    color: var(--ink);
+    border-radius: 4px;
+  }
+  .figure-toggles .toggle-row:hover {
+    background: var(--soft-blue);
+  }
+  .figure-toggles .toggle-row span {
+    flex: 1;
     min-width: 0;
   }
   .param-section-header {
@@ -322,6 +346,44 @@
       </div>
     </div>
 
+    <!-- Figure visibility toggles -->
+    <div class="panel">
+      <div class="panel-header">
+        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        <h2>Figures</h2>
+      </div>
+      <div class="panel-body figure-toggles">
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-transition" checked><span class="track"></span></label>
+          <span>Transition path</span>
+        </div>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-profit" checked><span class="track"></span></label>
+          <span>Platform profit decomposition</span>
+        </div>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-welfare" checked><span class="track"></span></label>
+          <span>Consumer welfare W(&tau;<sub>t</sub>)</span>
+        </div>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-sellers" checked><span class="track"></span></label>
+          <span>Third-party sellers N<sub>t</sub></span>
+        </div>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-shares" checked><span class="track"></span></label>
+          <span>Aggregate market shares</span>
+        </div>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-entry-flow" checked><span class="track"></span></label>
+          <span>Per-period entry flow &Delta;Y<sub>t</sub></span>
+        </div>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" data-target="fig-cumloss" checked><span class="track"></span></label>
+          <span>Cumulative welfare loss</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Equilibrium outcomes block -->
     <div class="panel results">
       <div class="panel-header">
@@ -342,53 +404,32 @@
 
   <!-- RIGHT column: plots as separate blocks -->
   <div class="right">
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Transition path</h3>
-      </div>
+    <div class="plot-container" data-figure="fig-transition">
+      <div class="panel-header"><h3>Transition path</h3></div>
       <div class="panel-body"><div id="plot-transition"></div></div>
     </div>
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Platform profit decomposition</h3>
-      </div>
+    <div class="plot-container" data-figure="fig-profit">
+      <div class="panel-header"><h3>Platform profit decomposition</h3></div>
       <div class="panel-body"><div id="plot-profit"></div></div>
     </div>
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Consumer welfare W(&tau;<sub>t</sub>)</h3>
-      </div>
+    <div class="plot-container" data-figure="fig-welfare">
+      <div class="panel-header"><h3>Consumer welfare W(&tau;<sub>t</sub>)</h3></div>
       <div class="panel-body"><div id="plot-welfare"></div></div>
     </div>
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Third-party sellers N<sub>t</sub></h3>
-      </div>
+    <div class="plot-container" data-figure="fig-sellers">
+      <div class="panel-header"><h3>Third-party sellers N<sub>t</sub></h3></div>
       <div class="panel-body"><div id="plot-sellers"></div></div>
     </div>
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Aggregate market shares</h3>
-      </div>
+    <div class="plot-container" data-figure="fig-shares">
+      <div class="panel-header"><h3>Aggregate market shares</h3></div>
       <div class="panel-body"><div id="plot-shares"></div></div>
     </div>
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Per-period entry flow &Delta;Y<sub>t</sub></h3>
-      </div>
+    <div class="plot-container" data-figure="fig-entry-flow">
+      <div class="panel-header"><h3>Per-period entry flow &Delta;Y<sub>t</sub></h3></div>
       <div class="panel-body"><div id="plot-entry-flow"></div></div>
     </div>
-    <div class="plot-container">
-      <div class="panel-header">
-        <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
-        <h3>Cumulative welfare loss</h3>
-      </div>
+    <div class="plot-container" data-figure="fig-cumloss">
+      <div class="panel-header"><h3>Cumulative welfare loss</h3></div>
       <div class="panel-body"><div id="plot-cumloss"></div></div>
     </div>
   </div>
@@ -887,63 +928,107 @@ function update() {
     renderMathInElement(tbl, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
   }
 
-  // Common Plotly layout pieces
+  // ---- Professional Plotly theme (top-tier econ outlet style) ----
+  const FONT_FAMILY = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  const AXIS_INK    = "#374151";  // axis labels
+  const AXIS_LINE   = "#cbd5e0";  // axis lines, ticks
+  const GRID_COLOR  = "#eef0f3";  // very subtle horizontal grid
   const baseLayout = {
-    margin: { l: 50, r: 20, t: 12, b: 50 },
+    margin: { l: 56, r: 20, t: 10, b: 60 },
     height: 280,
+    font: { family: FONT_FAMILY, size: 11, color: "#1f2937" },
     plot_bgcolor: "#fff",
     paper_bgcolor: "#fff",
-    xaxis: { title: { text: "Period t", font: { size: 11 } }, gridcolor: "#eee", zerolinecolor: "#999" },
-    legend: { orientation: "h", y: -0.22, font: { size: 10 } }
+    xaxis: {
+      title: { text: "Period t", font: { size: 11, color: AXIS_INK }, standoff: 8 },
+      showline: true, linecolor: AXIS_LINE, linewidth: 1,
+      showgrid: false,
+      zeroline: false,
+      ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
+      tickfont: { size: 10, color: "#6b7280" },
+      automargin: false
+    },
+    legend: {
+      orientation: "h", y: -0.32, x: 0, xanchor: "left",
+      font: { size: 10, color: AXIS_INK },
+      bgcolor: "rgba(255,255,255,0)"
+    },
+    hoverlabel: {
+      font: { family: FONT_FAMILY, size: 11 },
+      bordercolor: AXIS_LINE
+    }
+  };
+  const Y_STYLE = {
+    showline: true, linecolor: AXIS_LINE, linewidth: 1,
+    showgrid: true, gridcolor: GRID_COLOR, gridwidth: 1,
+    zeroline: false,
+    ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
+    tickfont: { size: 10, color: "#6b7280" }
   };
   function L(overrides) {
-    const out = Object.assign({}, baseLayout, overrides, {
-      xaxis: Object.assign({}, baseLayout.xaxis, overrides.xaxis || {}),
-      yaxis: Object.assign({ gridcolor: "#eee", zerolinecolor: "#999" }, overrides.yaxis || {})
+    const ov = overrides || {};
+    const out = Object.assign({}, baseLayout, ov, {
+      xaxis: Object.assign({}, baseLayout.xaxis, ov.xaxis || {}),
+      yaxis: Object.assign({}, Y_STYLE, ov.yaxis || {})
     });
+    // Ensure y-axis title styling is consistent
+    if (out.yaxis.title && typeof out.yaxis.title === "string") {
+      out.yaxis.title = { text: out.yaxis.title, font: { size: 11, color: AXIS_INK }, standoff: 6 };
+    } else if (out.yaxis.title && typeof out.yaxis.title === "object" && !out.yaxis.title.font) {
+      out.yaxis.title.font = { size: 11, color: AXIS_INK };
+      out.yaxis.title.standoff = out.yaxis.title.standoff || 6;
+    }
     if (out.title === undefined) delete out.title;
     return out;
   }
+  // Refined palette
+  const COL = {
+    navy:   "#1F4E79",
+    maroon: "#8A1538",
+    forest: "#1B6B4A",
+    slate:  "#4A5568",
+    gold:   "#B7791F"
+  };
   const cfg = { displayModeBar: false, responsive: true };
 
   // Plot 1 — transition path (μ_t, Y_t)
   Plotly.react("plot-transition", [
-    { x: traj_t, y: traj_mu, name: "μ<sub>t</sub> (fraction of categories entered)",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#1F4E79", width: 2 }, marker: { size: 5 } },
-    { x: traj_t, y: traj_Y, name: "Y<sub>t</sub> (size-weighted footprint)",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
+    { x: traj_t, y: traj_mu, name: "μ<sub>t</sub>  fraction of categories entered",
+      type: "scatter", mode: "lines",
+      line: { color: COL.navy, width: 2.4, shape: "spline", smoothing: 0.6 } },
+    { x: traj_t, y: traj_Y, name: "Y<sub>t</sub>  size-weighted footprint",
+      type: "scatter", mode: "lines",
+      line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.6 } }
   ], L({
     yaxis: { title: "State variables", range: [0, 1] }
   }), cfg);
 
   // Plot 2 — platform profit decomposition (stacked area)
   Plotly.react("plot-profit", [
-    { x: traj_t, y: traj_feeRev, name: "Fee revenue  (Θ · π<sup>M</sup>(τ<sub>t</sub>))",
+    { x: traj_t, y: traj_feeRev, name: "Fee revenue   Θ · π<sup>M</sup>(τ<sub>t</sub>)",
       type: "scatter", mode: "lines", stackgroup: "p",
-      fillcolor: "rgba(31, 78, 121, 0.55)",
-      line: { color: "#1F4E79", width: 1.5 } },
-    { x: traj_t, y: traj_ownProf, name: "Own-product profit  (Y<sub>t</sub> · m(τ<sub>t</sub>))",
+      fillcolor: "rgba(31, 78, 121, 0.30)",
+      line: { color: COL.navy, width: 1.8, shape: "spline", smoothing: 0.5 } },
+    { x: traj_t, y: traj_ownProf, name: "Own-product profit   Y<sub>t</sub> · m(τ<sub>t</sub>)",
       type: "scatter", mode: "lines", stackgroup: "p",
-      fillcolor: "rgba(138, 21, 56, 0.55)",
-      line: { color: "#8A1538", width: 1.5 } }
+      fillcolor: "rgba(138, 21, 56, 0.30)",
+      line: { color: COL.maroon, width: 1.8, shape: "spline", smoothing: 0.5 } }
   ], L({
-    yaxis: { title: "Π<sub>t</sub> per period" }
+    yaxis: { title: "Π<sub>t</sub>   platform profit per period" }
   }), cfg);
 
   // Plot 3 — consumer welfare per category, with τ^M benchmark
   const welfareTraces = [
-    { x: traj_t, y: traj_W, name: "W(τ<sub>t</sub>)  consumer surplus per category",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#8A1538", width: 2 }, marker: { size: 5 } }
+    { x: traj_t, y: traj_W, name: "W(τ<sub>t</sub>)   along the transition",
+      type: "scatter", mode: "lines",
+      line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.6 } }
   ];
   if (W_M !== null) {
     welfareTraces.push({
       x: traj_t, y: traj_t.map(() => W_M),
-      name: "W(τ<sup>M</sup>)  pure-marketplace benchmark",
+      name: "W(τ<sup>M</sup>)   pure-marketplace benchmark",
       type: "scatter", mode: "lines",
-      line: { color: "#1B6B4A", width: 1.5, dash: "dash" }
+      line: { color: COL.forest, width: 1.6, dash: "dash" }
     });
   }
   Plotly.react("plot-welfare", welfareTraces, L({
@@ -953,27 +1038,28 @@ function update() {
   // Plot 4 — number of third-party sellers (aggregate)
   Plotly.react("plot-sellers", [
     { x: traj_t, y: traj_N, name: "Aggregate fringe-seller mass N<sub>t</sub>",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#1F4E79", width: 2 }, marker: { size: 5 },
-      fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.12)" }
+      type: "scatter", mode: "lines",
+      line: { color: COL.navy, width: 2.4, shape: "spline", smoothing: 0.6 },
+      fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.08)" }
   ], L({
-    yaxis: { title: "N<sub>t</sub>  (aggregate)" }
+    yaxis: { title: "N<sub>t</sub>" },
+    showlegend: false
   }), cfg);
 
   // Plot 5 — aggregate market shares (stacked area)
   Plotly.react("plot-shares", [
-    { x: traj_t, y: traj_aggSA, name: "Amazon  (s<sub>A</sub>)",
+    { x: traj_t, y: traj_aggSA, name: "Amazon  s<sub>A</sub>",
       type: "scatter", mode: "lines", stackgroup: "s",
-      fillcolor: "rgba(138, 21, 56, 0.60)",
-      line: { color: "#8A1538", width: 1.5 } },
-    { x: traj_t, y: traj_aggSS, name: "Fringe  (s<sub>S</sub>)",
+      fillcolor: "rgba(138, 21, 56, 0.40)",
+      line: { color: COL.maroon, width: 1.6, shape: "spline", smoothing: 0.5 } },
+    { x: traj_t, y: traj_aggSS, name: "Fringe  s<sub>S</sub>",
       type: "scatter", mode: "lines", stackgroup: "s",
-      fillcolor: "rgba(31, 78, 121, 0.55)",
-      line: { color: "#1F4E79", width: 1.5 } },
-    { x: traj_t, y: traj_aggR, name: "Outside  (R)",
+      fillcolor: "rgba(31, 78, 121, 0.35)",
+      line: { color: COL.navy, width: 1.6, shape: "spline", smoothing: 0.5 } },
+    { x: traj_t, y: traj_aggR, name: "Outside  R",
       type: "scatter", mode: "lines", stackgroup: "s",
-      fillcolor: "rgba(160, 160, 160, 0.55)",
-      line: { color: "#6B7280", width: 1.5 } }
+      fillcolor: "rgba(74, 85, 104, 0.30)",
+      line: { color: COL.slate, width: 1.6, shape: "spline", smoothing: 0.5 } }
   ], L({
     yaxis: { title: "Share", range: [0, 1] }
   }), cfg);
@@ -982,19 +1068,23 @@ function update() {
   Plotly.react("plot-entry-flow", [
     { x: traj_t, y: traj_entryFlow, name: "ΔY<sub>t</sub>",
       type: "bar",
-      marker: { color: "#1F4E79", line: { color: "#ffffff", width: 0.5 } } }
+      marker: { color: COL.navy, line: { color: "#ffffff", width: 0.5 } },
+      width: 0.7 }
   ], L({
-    yaxis: { title: "New category mass entered" }
+    yaxis: { title: "ΔY<sub>t</sub>   new category mass entered" },
+    showlegend: false,
+    bargap: 0.25
   }), cfg);
 
   // Plot 7 — cumulative discounted consumer welfare loss
   Plotly.react("plot-cumloss", [
-    { x: traj_t, y: traj_cumLoss, name: "Σ<sub>s≤t</sub> δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]",
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#8A1538", width: 2 }, marker: { size: 5 },
-      fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.15)" }
+    { x: traj_t, y: traj_cumLoss, name: "cumulative discounted loss",
+      type: "scatter", mode: "lines",
+      line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.6 },
+      fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.10)" }
   ], L({
-    yaxis: { title: "Σ δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]" }
+    yaxis: { title: "Σ<sub>s≤t</sub> δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]" },
+    showlegend: false
   }), cfg);
 
 }
@@ -1004,17 +1094,28 @@ PARAMS.forEach(k => {
 });
 
 // ----------------------------------------------------------------------------
-// Per-panel collapse toggles (the small "switch" in each panel header).
-// Clicking off collapses the panel to just its header bar.
+// Toggle behaviour:
+//  - switches with data-target hide/show the referenced figure entirely
+//  - all other switches collapse their parent panel to just its header bar
 // ----------------------------------------------------------------------------
 document.querySelectorAll('.switch input[type="checkbox"]').forEach(cb => {
   cb.addEventListener("change", () => {
-    const block = cb.closest('.panel, .plot-container');
-    if (!block) return;
-    block.classList.toggle('collapsed', !cb.checked);
-    if (cb.checked && window.Plotly) {
-      const plotDiv = block.querySelector('[id^="plot-"]');
-      if (plotDiv) Plotly.Plots.resize(plotDiv);
+    if (cb.dataset.target) {
+      const target = document.querySelector(`[data-figure="${cb.dataset.target}"]`);
+      if (!target) return;
+      target.style.display = cb.checked ? "" : "none";
+      if (cb.checked && window.Plotly) {
+        const plotDiv = target.querySelector('[id^="plot-"]');
+        if (plotDiv) Plotly.Plots.resize(plotDiv);
+      }
+    } else {
+      const block = cb.closest('.panel, .plot-container');
+      if (!block) return;
+      block.classList.toggle('collapsed', !cb.checked);
+      if (cb.checked && window.Plotly) {
+        const plotDiv = block.querySelector('[id^="plot-"]');
+        if (plotDiv) Plotly.Plots.resize(plotDiv);
+      }
     }
   });
 });
