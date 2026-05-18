@@ -43,15 +43,20 @@
     display: grid;
     grid-template-columns: 380px 1fr;
     gap: 16px;
-    max-width: 1600px;
   }
   @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; }
   }
-  .left, .right {
+  .left {
     display: flex;
     flex-direction: column;
     gap: 16px;
+  }
+  .right {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+    gap: 16px;
+    align-content: start;
   }
   .param-section-header {
     font-size: 12px;
