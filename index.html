@@ -145,14 +145,15 @@
 
 <nav>
   <a href="#fig1">Fig 1. Phase portrait</a>
-  <a href="#fig2">Fig 2. Profit surface</a>
   <a href="#fig3">Fig 3. Welfare channels</a>
   <a href="#fig4">Fig 4. DWL</a>
   <a href="#fig5">Fig 5. Transitional ratchet</a>
   <a href="#fig6">Fig 6. Y_ss comp. statics</a>
   <a href="#fig7">Fig 7. Cap cascade</a>
-  <a href="#fig8">Fig 8. Combined regulation</a>
-  <a href="#fig9">Fig 9. Iso-N welfare</a>
+  <span style="color:var(--muted); font-size:0.85em; margin:0 0.5em;">|&nbsp;Web-only:</span>
+  <a href="#fig2">Profit surface (3D)</a>
+  <a href="#fig8">Combined regulation (3D)</a>
+  <a href="#fig9">Iso-N vs welfare</a>
 </nav>
 
 <main>
@@ -170,11 +171,13 @@
 </section>
 
 <section class="figure-card" id="fig2">
-  <h2>Figure 2. Platform profit surface</h2>
-  <div class="subtitle">Concave profit objective in (&sigma;, &tau;)</div>
+  <h2>Profit surface &Pi;(&sigma;, &tau;) <span style="color:var(--muted); font-weight:400; font-size:0.7em;">(web-only)</span></h2>
+  <div class="subtitle">3D view of the concave profit objective. Drag to rotate.</div>
   <p class="summary">
-    Color shows the platform's profit &Pi;(&sigma;, &tau;). The interior
-    maximum is marked. The concavity verifies the second-order condition.
+    The platform's profit &Pi;(&sigma;, &tau;) as a surface. The red marker is the
+    interior maximum (&sigma;*, &tau;*). The local concavity around the peak
+    verifies the second-order condition. This figure is web-only because the
+    3D view conveys the geometry more cleanly than a 2D contour map.
   </p>
   <div class="controls" id="ctrl2"></div>
   <div id="plot2" class="plot"></div>
@@ -242,24 +245,30 @@
 </section>
 
 <section class="figure-card" id="fig8">
-  <h2>Figure 8. Combined regulation</h2>
-  <div class="subtitle">Joint cap dominates either single instrument</div>
+  <h2>Combined regulation: welfare over (&tau;&#772;, &sigma;<sub>cap</sub>) <span style="color:var(--muted); font-weight:400; font-size:0.7em;">(web-only)</span></h2>
+  <div class="subtitle">3D welfare surface over the policy space. Drag to rotate.</div>
   <p class="summary">
-    Heatmap of consumer welfare over (&tau;&#772;, &sigma;<sub>cap</sub>).
-    The corner with both instruments capped attains the highest welfare.
+    Consumer welfare W as a function of the fee cap &tau;&#772; and the
+    self-preferencing cap &sigma;<sub>cap</sub>. Three reference policies are
+    marked. The combined cap (low &tau;&#772;, &sigma;<sub>cap</sub>=0) sits
+    at the highest level of the surface; either single-instrument regime is
+    dominated. Web-only because the 3D view of the welfare surface conveys
+    the dominance more directly than a 2D heatmap.
   </p>
   <div class="controls" id="ctrl8"></div>
   <div id="plot8" class="plot"></div>
 </section>
 
 <section class="figure-card" id="fig9">
-  <h2>Figure 9. Iso-N curves and welfare</h2>
+  <h2>Iso-N<sub>S</sub> versus welfare in (&tau;, F) space <span style="color:var(--muted); font-weight:400; font-size:0.7em;">(web-only)</span></h2>
   <div class="subtitle">Market-structure observables under-identify welfare</div>
   <p class="summary">
     Heat color: consumer welfare W(&tau;, F) at fixed &sigma;.
     The red curve is the locus of (&tau;, F) yielding the same active-seller
-    count N<sub>S</sub>. Points on the red curve are observationally equivalent
-    but generate different W.
+    count N<sub>S</sub>. Two points on the red curve generate the same
+    market-structure observable but different consumer welfare. Web-only
+    because the value of the figure is in tracing the iso-N<sub>S</sub>
+    curve across welfare contours interactively.
   </p>
   <div class="controls" id="ctrl9"></div>
   <div id="plot9" class="plot"></div>
@@ -499,31 +508,40 @@ function drawFig1(p) {
 function drawFig2(p) {
   const sig_grid = linspace(0.01, 0.40, 60);
   const tau_grid = linspace(0.05, 0.55, 60);
+  // z[i][j] = Pi(sigma_j, tau_i) for surface plot
   const z = tau_grid.map(t => sig_grid.map(s => Pi_fn(s, t, p)));
   const eq = joint_eq(p);
+  const Pi_star = Pi_fn(eq.sigma, eq.tau, p);
 
   const traces = [
     {
       x: sig_grid, y: tau_grid, z: z,
-      type: "heatmap", colorscale: "Viridis", showscale: true,
-      colorbar: { title: "Pi" }
+      type: "surface", colorscale: "Viridis", showscale: true,
+      colorbar: { title: "Pi" },
+      contours: {
+        z: {
+          show: true, usecolormap: true,
+          highlightcolor: "#42b5d3", project: { z: true }
+        }
+      },
+      opacity: 0.95
     },
     {
-      type: "contour", x: sig_grid, y: tau_grid, z: z,
-      contours: { coloring: "none" },
-      line: { color: "white", width: 1 }, showscale: false
-    },
-    {
-      x: [eq.sigma], y: [eq.tau], mode: "markers", showlegend: false,
-      marker: { color: "#b91c1c", size: 14, symbol: "circle" },
-      type: "scatter"
+      x: [eq.sigma], y: [eq.tau], z: [Pi_star],
+      mode: "markers", showlegend: false,
+      marker: { color: "#b91c1c", size: 6, symbol: "circle" },
+      type: "scatter3d", name: "(sigma*, tau*)"
     }
   ];
 
   Plotly.react("plot2", traces, {
-    margin: { l: 60, r: 60, t: 30, b: 60 },
-    xaxis: { title: "sigma", range: [0, 0.4] },
-    yaxis: { title: "tau", range: [0.05, 0.55] }
+    margin: { l: 0, r: 0, t: 20, b: 0 },
+    scene: {
+      xaxis: { title: "sigma", range: [0, 0.4] },
+      yaxis: { title: "tau", range: [0.05, 0.55] },
+      zaxis: { title: "Profit Pi" },
+      camera: { eye: { x: 1.6, y: -1.6, z: 0.9 } }
+    }
   }, { responsive: true, displayModeBar: false });
 }
 
@@ -724,38 +742,54 @@ function drawFig8(p) {
   const eq = joint_eq(p);
   const tauBars  = linspace(0.05, eq.tau, 40);
   const sigCaps  = linspace(0, eq.sigma, 40);
+  // W depends on tau only, so the surface is a tilted plane along x.
+  // z[i][j] = W(tauBars[j], p)  (i indexes sigCaps, j indexes tauBars)
   const z = sigCaps.map(_ => tauBars.map(tb => W_fn(tb, p)));
+
+  // Reference policy points on the surface
+  const W_fee_cap_only  = W_fn(0.20, p);
+  const W_ND_only       = W_fn(eq.tau, p);
+  const W_combined      = W_fn(0.20, p);
 
   const traces = [
     {
       x: tauBars, y: sigCaps, z: z,
-      type: "heatmap", colorscale: "Viridis",
-      colorbar: { title: "W" }
+      type: "surface", colorscale: "Viridis", showscale: true,
+      colorbar: { title: "W" },
+      contours: {
+        z: {
+          show: true, usecolormap: true,
+          highlightcolor: "#42b5d3", project: { z: true }
+        }
+      },
+      opacity: 0.95
     },
     {
-      type: "contour", x: tauBars, y: sigCaps, z: z,
-      contours: { coloring: "none" },
-      line: { color: "white", width: 1 }, showscale: false
+      x: [eq.tau], y: [0], z: [W_ND_only],
+      mode: "markers", type: "scatter3d", name: "Non-discrim only",
+      marker: { color: "#15803d", size: 6, symbol: "square" }
     },
     {
-      x: [eq.tau], y: [0], mode: "markers", name: "ND only",
-      marker: { color: "#15803d", size: 12, symbol: "square" }
+      x: [0.20], y: [eq.sigma], z: [W_fee_cap_only],
+      mode: "markers", type: "scatter3d", name: "Fee cap only",
+      marker: { color: "#b91c1c", size: 6, symbol: "diamond" }
     },
     {
-      x: [0.20], y: [eq.sigma], mode: "markers", name: "Fee cap only",
-      marker: { color: "#b91c1c", size: 12, symbol: "triangle-up" }
-    },
-    {
-      x: [0.20], y: [0], mode: "markers", name: "Combined",
-      marker: { color: "#012169", size: 14 }
+      x: [0.20], y: [0], z: [W_combined],
+      mode: "markers", type: "scatter3d", name: "Combined",
+      marker: { color: "#012169", size: 7, symbol: "circle" }
     }
   ];
 
   Plotly.react("plot8", traces, {
-    margin: { l: 60, r: 60, t: 30, b: 60 },
-    xaxis: { title: "Fee cap tau-bar", range: [0.05, eq.tau + 0.005] },
-    yaxis: { title: "Self-preferencing cap", range: [-0.002, eq.sigma + 0.005] },
-    showlegend: true, legend: { orientation: "h", y: -0.2 }
+    margin: { l: 0, r: 0, t: 20, b: 0 },
+    scene: {
+      xaxis: { title: "Fee cap tau-bar", range: [0.05, eq.tau + 0.005] },
+      yaxis: { title: "Self-preferencing cap", range: [0, eq.sigma + 0.005] },
+      zaxis: { title: "Consumer welfare W" },
+      camera: { eye: { x: 1.7, y: -1.5, z: 0.8 } }
+    },
+    showlegend: true, legend: { orientation: "h", y: 0 }
   }, { responsive: true, displayModeBar: false });
 }
 
