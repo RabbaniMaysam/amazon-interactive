@@ -1,2225 +1,860 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Amazon Brand Paper — Interactive Companion</title>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-        onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fees and Self-Preferencing in Hybrid Marketplaces — Interactive Companion</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <style>
   :root {
-    --bg: #f4f5f7;
+    --primary: #012169;
+    --secondary: #f2a900;
+    --accent: #525252;
+    --positive: #15803d;
+    --negative: #b91c1c;
+    --bg: #fafafa;
     --panel: #ffffff;
-    --ink: #1a1a1a;
-    --muted: #555555;
-    --border: #e0e0e0;
-    --accent: #1F4E79;
-    --highlight: #8A1538;
-    --soft-blue: #eef5ff;
-    --sidebar-bg: #f8fafc;
-    --sidebar-width: 320px;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
   body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
     background: var(--bg);
-    color: var(--ink);
-    line-height: 1.45;
+    color: var(--text);
+    line-height: 1.55;
   }
-  /* ------- App shell: sidebar + main ------- */
-  .app {
-    display: grid;
-    grid-template-columns: var(--sidebar-width) 1fr;
-    min-height: 100vh;
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 1.5em 2em;
   }
-  @media (max-width: 900px) {
-    .app { grid-template-columns: 1fr; }
-    .sidebar { position: static; max-height: none; }
-  }
-  .sidebar {
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
-    padding: 20px 18px 24px 18px;
-    overflow-y: auto;
-    max-height: 100vh;
+  header h1 { margin: 0; font-size: 1.4em; font-weight: 600; }
+  header p { margin: 0.4em 0 0 0; font-size: 0.9em; opacity: 0.9; }
+  nav {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0.5em 2em;
+    overflow-x: auto;
+    white-space: nowrap;
     position: sticky;
     top: 0;
+    z-index: 100;
   }
-  .sidebar h1 {
-    font-size: 17px;
-    margin: 0;
-    color: var(--accent);
-    line-height: 1.25;
-  }
-  .sidebar .subtitle {
-    color: var(--muted);
-    font-size: 12px;
-    margin: 4px 0 16px 0;
-  }
-  .main {
-    padding: 28px 36px;
-    min-width: 0;
-    overflow-x: auto;
-  }
-  /* ------- Sidebar sections ------- */
-  .sidebar-section {
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px dashed var(--border);
-  }
-  .sidebar-section:last-child { border-bottom: none; }
-  .sidebar-section h2 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    color: var(--muted);
-    margin: 0 0 10px 0;
-    font-weight: 600;
-  }
-  .param-section-header {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    margin: 10px 0 6px 0;
-  }
-  .param { margin-bottom: 10px; }
-  .param-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    margin-bottom: 3px;
-    gap: 8px;
-  }
-  .param-label span:first-child { color: var(--muted); min-width: 0; }
-  .param-label span:last-child {
-    font-weight: 600;
-    font-family: "SFMono-Regular", Consolas, monospace;
-    flex-shrink: 0;
-  }
-  input[type="range"] {
-    width: 100%;
-    accent-color: var(--accent);
-    margin: 0;
-  }
-  .sidebar button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    width: 100%;
-    margin-top: 6px;
-  }
-  .sidebar button:hover { opacity: 0.9; }
-  /* ------- Navigation list ------- */
-  .nav-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    font-size: 13px;
-  }
-  .nav-list li { margin: 0; }
-  .nav-list a {
-    display: block;
-    padding: 5px 8px;
-    color: var(--ink);
+  nav a {
+    color: var(--primary);
     text-decoration: none;
-    border-radius: 4px;
-    border-left: 3px solid transparent;
-  }
-  .nav-list a:hover { background: var(--soft-blue); }
-  .nav-list a.active {
-    background: var(--soft-blue);
-    border-left-color: var(--accent);
-    color: var(--accent);
-    font-weight: 600;
-  }
-  .nav-list details { margin-top: 4px; }
-  .nav-list summary {
-    cursor: pointer;
-    padding: 5px 8px;
-    color: var(--ink);
-    font-weight: 500;
-    list-style: none;
+    margin-right: 1em;
+    font-size: 0.85em;
+    padding: 0.3em 0.6em;
     border-radius: 4px;
   }
-  .nav-list summary:hover { background: var(--soft-blue); }
-  .nav-list summary::before {
-    content: "▸ ";
-    display: inline-block;
-    width: 14px;
-    color: var(--muted);
-    transition: transform 0.15s;
+  nav a:hover { background: var(--bg); }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2em;
   }
-  .nav-list details[open] summary::before { content: "▾ "; }
-  .nav-list details ul {
-    list-style: none;
-    padding: 0 0 0 14px;
-    margin: 2px 0;
-  }
-  .nav-list details a {
-    padding: 4px 8px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .nav-list details a.active { color: var(--accent); }
-  /* ------- Main: views ------- */
-  .view { display: none; }
-  .view.active { display: block; }
-  .page-header {
-    margin-bottom: 20px;
-  }
-  .page-header h2 {
-    color: var(--accent);
-    font-size: 24px;
-    margin: 0 0 4px 0;
-    line-height: 1.25;
-  }
-  .page-header .crumb {
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-  }
-  .page-header .lede {
-    font-size: 15px;
-    color: var(--ink);
-    max-width: 780px;
-  }
-  /* ------- Home: prediction cards ------- */
-  .pred-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
-  }
-  .pred-card {
+  .figure-card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 14px 16px;
-    text-decoration: none;
-    color: var(--ink);
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.05s;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    margin-bottom: 2em;
+    padding: 1.5em;
   }
-  .pred-card:hover {
-    border-color: var(--accent);
-    box-shadow: 0 4px 10px rgba(31, 78, 121, 0.10);
+  .figure-card h2 {
+    margin: 0 0 0.4em 0;
+    font-size: 1.2em;
+    color: var(--primary);
   }
-  .pred-card.deferred { opacity: 0.55; pointer-events: none; }
-  .pred-card .pred-num {
-    font-size: 11px;
+  .figure-card .subtitle {
     color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
+    font-size: 0.9em;
+    margin-bottom: 1em;
   }
-  .pred-card .pred-title {
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1.35;
+  .figure-card .summary {
+    margin: 0.5em 0 1em 0;
+    font-size: 0.95em;
   }
-  .pred-card .pred-tag {
-    margin-top: 4px;
-    align-self: flex-start;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: var(--soft-blue);
-    color: var(--accent);
-  }
-  .pred-card .pred-tag.descriptive { background: #fff4e0; color: #8a5a00; }
-  .pred-card .pred-tag.future { background: #f1f1f6; color: #5a5a72; }
-  .pred-card .pred-tag.dashboard { background: #e8f5ee; color: #1B6B4A; }
-  .pred-card .pred-tag.deferred { background: #f5e8e8; color: #8A1538; }
-  .home-section { margin-top: 24px; }
-  .home-section h3 {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    color: var(--muted);
-    margin: 0 0 8px 0;
-  }
-  /* ------- Plot / panel ------- */
-  .plot-container {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 18px;
-  }
-  .plot-grid {
+  .controls {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-    gap: 14px;
-  }
-  .panel-header h3 {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--accent);
-    margin: 0 0 8px 0;
-    font-weight: 600;
-  }
-  /* ------- Prediction page layout ------- */
-  .pred-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 20px;
-    margin-top: 16px;
-  }
-  @media (max-width: 1000px) {
-    .pred-layout { grid-template-columns: 1fr; }
-  }
-  .pred-text {
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--ink);
-  }
-  .pred-text h4 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
-    margin: 0 0 6px 0;
-  }
-  .pred-text p { margin: 0 0 10px 0; }
-  .pred-figure {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 18px;
-    min-height: 360px;
-  }
-  .pred-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .pred-nav a {
-    color: var(--accent);
-    text-decoration: none;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--panel);
-  }
-  .pred-nav a:hover { background: var(--soft-blue); }
-  .pred-nav a.disabled { opacity: 0.4; pointer-events: none; }
-  /* ------- Dashboard view ------- */
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: 14px;
-  }
-  .results table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .results th, .results td {
-    text-align: left;
-    padding: 5px 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  .results th { color: var(--muted); font-weight: 500; width: 70%; }
-  .results td {
-    font-family: "SFMono-Regular", Consolas, monospace;
-    text-align: right;
-  }
-  .results tr.section-row td {
-    background: var(--soft-blue);
-    color: var(--accent);
-    text-align: left;
-    font-weight: 600;
-    font-family: inherit;
-    padding-top: 7px;
-  }
-  .results .highlight td { color: var(--highlight); font-weight: 700; }
-  .notes { font-size: 11px; color: var(--muted); margin-top: 8px; }
-  /* ------- Warning ------- */
-  .warn {
-    background: #fff4f6;
-    color: var(--highlight);
-    padding: 8px 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.6em 1em;
+    margin-bottom: 1em;
+    padding: 0.8em;
+    background: var(--bg);
     border-radius: 6px;
-    font-size: 12px;
-    margin-bottom: 12px;
-    display: none;
   }
-  .warn.show { display: block; }
+  .control { display: flex; flex-direction: column; }
+  .control label {
+    font-size: 0.85em;
+    color: var(--muted);
+    margin-bottom: 0.2em;
+  }
+  .control .value {
+    font-size: 0.85em;
+    color: var(--primary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .control input[type=range] {
+    width: 100%;
+  }
+  .plot {
+    width: 100%;
+    height: 480px;
+  }
+  .equation {
+    font-family: "Cambria Math", Cambria, Georgia, serif;
+    font-style: italic;
+    color: var(--accent);
+    background: var(--bg);
+    padding: 0.4em 0.7em;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 0.2em 0;
+  }
+  .reset-btn {
+    background: white;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 0.3em 0.8em;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+  }
+  .reset-btn:hover { background: var(--primary); color: white; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85em;
+    padding: 2em;
+  }
 </style>
 </head>
 <body>
 
-<div class="app">
+<header>
+  <h1>Fees and Self-Preferencing in Hybrid Marketplaces</h1>
+  <p>Interactive companion to the numerical illustration section.
+     Adjust the sliders to explore how the figures respond to parameter changes.</p>
+</header>
 
-  <!-- ============================== SIDEBAR ============================== -->
-  <aside class="sidebar">
-    <h1>Amazon Brand Paper</h1>
-    <div class="subtitle">Interactive companion to the manuscript</div>
+<nav>
+  <a href="#fig1">Fig 1. Phase portrait</a>
+  <a href="#fig2">Fig 2. Profit surface</a>
+  <a href="#fig3">Fig 3. Welfare channels</a>
+  <a href="#fig4">Fig 4. DWL</a>
+  <a href="#fig5">Fig 5. Transitional ratchet</a>
+  <a href="#fig6">Fig 6. Y_ss comp. statics</a>
+  <a href="#fig7">Fig 7. Cap cascade</a>
+  <a href="#fig8">Fig 8. Combined regulation</a>
+  <a href="#fig9">Fig 9. Iso-N welfare</a>
+</nav>
 
-    <!-- Parameter sliders -->
-    <div class="sidebar-section">
-      <h2>Parameters</h2>
+<main>
 
-      <div class="param-section-header">Static</div>
-      <div class="param">
-        <div class="param-label"><span>$c$ — 3P marginal cost</span><span id="c-val">8.00</span></div>
-        <input type="range" id="c" min="1" max="15" step="0.05" value="8">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$F$ — 3P entry cost</span><span id="F-val">0.30945</span></div>
-        <input type="range" id="F" min="0.05" max="1" step="0.001" value="0.3094478571">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$v$ — product value</span><span id="v-val">13.18</span></div>
-        <input type="range" id="v" min="8" max="20" step="0.05" value="13.1753747156">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$\alpha$ — visibility cost</span><span id="alpha-val">0.13406</span></div>
-        <input type="range" id="alpha" min="0.01" max="1" step="0.001" value="0.1340640092">
-      </div>
+<section class="figure-card" id="fig1">
+  <h2>Figure 1. Best-response phase portrait</h2>
+  <div class="subtitle">Strategic complementarity of fees and self-preferencing</div>
+  <p class="summary">
+    Both best responses slope upward, reflecting
+    <span class="equation">&part;<sup>2</sup>&Pi; / &part;&sigma; &part;&tau; &gt; 0</span>.
+    Their intersection is the hybrid equilibrium.
+  </p>
+  <div class="controls" id="ctrl1"></div>
+  <div id="plot1" class="plot"></div>
+</section>
 
-      <div class="param-section-header">Dynamic</div>
-      <div class="param">
-        <div class="param-label"><span>$\delta$ — discount factor</span><span id="delta-val">0.95</span></div>
-        <input type="range" id="delta" min="0.5" max="0.999" step="0.001" value="0.95">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$\lambda$ — entry speed</span><span id="lambda-val">0.50</span></div>
-        <input type="range" id="lambda" min="0.05" max="1" step="0.01" value="0.5">
-      </div>
-      <div class="param">
-        <div class="param-label"><span>$K$ — entry cost</span><span id="K-val">1.00</span></div>
-        <input type="range" id="K" min="0.1" max="5" step="0.05" value="1">
-      </div>
+<section class="figure-card" id="fig2">
+  <h2>Figure 2. Platform profit surface</h2>
+  <div class="subtitle">Concave profit objective in (&sigma;, &tau;)</div>
+  <p class="summary">
+    Color shows the platform's profit &Pi;(&sigma;, &tau;). The interior
+    maximum is marked. The concavity verifies the second-order condition.
+  </p>
+  <div class="controls" id="ctrl2"></div>
+  <div id="plot2" class="plot"></div>
+</section>
 
-      <button onclick="resetDefaults()">Reset to paper calibration</button>
-    </div>
+<section class="figure-card" id="fig3">
+  <h2>Figure 3. Direct vs indirect welfare channels of self-preferencing</h2>
+  <div class="subtitle">Self-preferencing harms welfare only through the fee</div>
+  <p class="summary">
+    Top trace (with &tau; held fixed): the direct effect on W is exactly zero
+    because the closed form W(&tau;) does not contain &sigma;.
+    Bottom trace (along the platform's fee response): downward sloping because
+    self-preferencing pulls &tau; up, and W is decreasing in &tau;.
+  </p>
+  <div class="controls" id="ctrl3"></div>
+  <div id="plot3" class="plot"></div>
+</section>
 
-    <!-- Navigation -->
-    <div class="sidebar-section">
-      <h2>Navigation</h2>
-      <ul class="nav-list">
-        <li><a href="#/home" data-route="home">Home</a></li>
-        <li><a href="#/dashboard" data-route="dashboard">Calibration dashboard</a></li>
-        <li>
-          <details open>
-            <summary>Predictions</summary>
-            <ul>
-              <li><a href="#/pred/1"  data-route="pred-1">1. 1P below 3P</a></li>
-              <li><a href="#/pred/2"  data-route="pred-2">2. Gap widens with $\tau$</a></li>
-              <li><a href="#/pred/3"  data-route="pred-3">3. $s_A$ rises with $\sigma$</a></li>
-              <li><a href="#/pred/4"  data-route="pred-4">4. Hybrid sets $\sigma>0$</a></li>
-              <li><a href="#/pred/5"  data-route="pred-5">5. Hybrid fees > pure</a></li>
-              <li><a href="#/pred/7"  data-route="pred-7">7. Entry threshold</a></li>
-              <li><a href="#/pred/8"  data-route="pred-8">8. Gap via 3P rising</a></li>
-              <li><a href="#/pred/9"  data-route="pred-9">9. $N_S$ falls with $\tau$</a></li>
-              <li><a href="#/pred/10" data-route="pred-10">10. Higher $v$ raises both</a></li>
-              <li><a href="#/pred/11" data-route="pred-11">11. Footprint rises</a></li>
-              <li><a href="#/pred/12" data-route="pred-12">12. $\sigma$ harms via $\tau$</a></li>
-              <li><a href="#/pred/13" data-route="pred-13">13. Pure: higher density</a></li>
-              <li><a href="#/pred/14" data-route="pred-14">14. Entry $\to s_S$ drop</a></li>
-              <li><a href="#/pred/15" data-route="pred-15">15. Fees chill innovation</a></li>
-              <li><a href="#/pred/16" data-route="pred-16">16. Strategic complements</a></li>
-              <li><a href="#/pred/17" data-route="pred-17">17. Welfare decomposition</a></li>
-              <li><a href="#/pred/18" data-route="pred-18">18. $Y_{ss}$ in $\delta,K,\lambda$</a></li>
-              <li><a href="#/pred/19" data-route="pred-19">19. Direct $\sigma$ effect = 0</a></li>
-              <li><a href="#/pred/20" data-route="pred-20">20. $\tau^W<\tau^*$</a></li>
-              <li><a href="#/pred/21" data-route="pred-21">21. Combined regulation</a></li>
-            </ul>
-          </details>
-        </li>
-      </ul>
-    </div>
-  </aside>
+<section class="figure-card" id="fig4">
+  <h2>Figure 4. Welfare-maximizing fee vs platform fee</h2>
+  <div class="subtitle">Deadweight loss of the platform's privately optimal fee</div>
+  <p class="summary">
+    Total surplus TS(&tau;) = W(&tau;) + &Pi;(&sigma;*(&tau;), &tau;). The
+    welfare-maximizing &tau;<sup>W</sup> sits below the platform's
+    &tau;*. The shaded region between them is the deadweight loss.
+  </p>
+  <div class="controls" id="ctrl4"></div>
+  <div id="plot4" class="plot"></div>
+</section>
 
-  <!-- ============================== MAIN AREA ============================== -->
-  <main class="main">
+<section class="figure-card" id="fig5">
+  <h2>Figure 5. Transitional ratchet of the platform footprint</h2>
+  <div class="subtitle">All paths converge to the same Y<sub>ss</sub></div>
+  <p class="summary">
+    Y<sub>t+1</sub> = (1 &minus; &lambda;) Y<sub>t</sub> + &lambda; Y<sup>e</sup>.
+    The speed-of-adjustment parameter &lambda; controls the half-life of
+    convergence but not the destination.
+  </p>
+  <div class="controls" id="ctrl5"></div>
+  <div id="plot5" class="plot"></div>
+</section>
 
-    <div id="warn" class="warn"></div>
+<section class="figure-card" id="fig6">
+  <h2>Figure 6. Steady-state footprint comparative statics</h2>
+  <div class="subtitle">Y<sub>ss</sub> rises in &delta;, falls in K, neutral in &lambda;</div>
+  <p class="summary">
+    The platform's long-run footprint is governed by patience &delta; and
+    entry cost K. The entry-speed parameter &lambda; affects only the
+    transition, not the steady state.
+  </p>
+  <div class="controls" id="ctrl6"></div>
+  <div id="plot6" class="plot"></div>
+</section>
 
-    <!-- ---------- HOME VIEW ---------- -->
-    <section class="view" data-view="home">
-      <div class="page-header">
-        <div class="crumb">Companion site</div>
-        <h2>Amazon's Brand Strategy: Interactive Predictions</h2>
-        <div class="lede">
-          Each card below maps to a testable prediction from the paper's theoretical model.
-          Click a card to see a tailor-made visualization. Parameters set in the left sidebar
-          drive every figure in real time, so sliding $\tau, \sigma$, or any structural parameter
-          updates the view you are reading.
-          The <a href="#/dashboard">calibration dashboard</a> shows the model's full
-          dynamic trajectory under the current parameter choice.
-        </div>
-      </div>
+<section class="figure-card" id="fig7">
+  <h2>Figure 7. Cap cascade</h2>
+  <div class="subtitle">Capping one instrument disciplines the other</div>
+  <p class="summary">
+    A fee cap &tau;&#772; below &tau;* shifts equilibrium to (&sigma;<sup>FC</sup>, &tau;&#772;)
+    with &sigma;<sup>FC</sup> &lt; &sigma;*. A non-discrimination mandate &sigma;=0
+    shifts equilibrium to (0, &tau;<sup>ND</sup>) along b<sub>&tau;</sub>.
+  </p>
+  <div class="controls" id="ctrl7"></div>
+  <div id="plot7" class="plot"></div>
+</section>
 
-      <div class="home-section">
-        <h3>Empirically tested predictions</h3>
-        <div class="pred-grid" id="pred-grid-A"></div>
-      </div>
-      <div class="home-section">
-        <h3>Descriptively examined predictions</h3>
-        <div class="pred-grid" id="pred-grid-B"></div>
-      </div>
-      <div class="home-section">
-        <h3>Testable using better data, a natural experiment, or structural estimation</h3>
-        <div class="pred-grid" id="pred-grid-C"></div>
-      </div>
-    </section>
+<section class="figure-card" id="fig8">
+  <h2>Figure 8. Combined regulation</h2>
+  <div class="subtitle">Joint cap dominates either single instrument</div>
+  <p class="summary">
+    Heatmap of consumer welfare over (&tau;&#772;, &sigma;<sub>cap</sub>).
+    The corner with both instruments capped attains the highest welfare.
+  </p>
+  <div class="controls" id="ctrl8"></div>
+  <div id="plot8" class="plot"></div>
+</section>
 
-    <!-- ---------- DASHBOARD VIEW ---------- -->
-    <section class="view" data-view="dashboard">
-      <div class="page-header">
-        <div class="crumb">Companion site</div>
-        <h2>Calibration dashboard</h2>
-        <div class="lede">
-          Slide any parameter on the left to update the equilibrium values, the dynamic
-          transition path, and consumer welfare under the platform's chosen fee. Highlighted
-          rows in the outcomes table match the headline values reported in Section F of the
-          manuscript.
-        </div>
-      </div>
-      <div class="dashboard-grid">
-        <div class="plot-container">
-          <div class="panel-header"><h3>Transition path</h3></div>
-          <div id="plot-transition"></div>
-        </div>
-        <div class="plot-container">
-          <div class="panel-header"><h3>Platform profit decomposition</h3></div>
-          <div id="plot-profit"></div>
-        </div>
-        <div class="plot-container">
-          <div class="panel-header"><h3>Consumer welfare $W(\tau_t)$</h3></div>
-          <div id="plot-welfare"></div>
-        </div>
-        <div class="plot-container">
-          <div class="panel-header"><h3>3P sellers $N_t$</h3></div>
-          <div id="plot-sellers"></div>
-        </div>
-        <div class="plot-container">
-          <div class="panel-header"><h3>Aggregate market shares</h3></div>
-          <div id="plot-shares"></div>
-        </div>
-        <div class="plot-container">
-          <div class="panel-header"><h3>Per-period entry flow $\Delta Y_t$</h3></div>
-          <div id="plot-entry-flow"></div>
-        </div>
-        <div class="plot-container">
-          <div class="panel-header"><h3>Cumulative welfare loss</h3></div>
-          <div id="plot-cumloss"></div>
-        </div>
-        <div class="plot-container results">
-          <div class="panel-header"><h3>Equilibrium outcomes</h3></div>
-          <table id="results-table"></table>
-          <div class="notes">
-            Highlighted rows match the headline values reported in Section F (Numerical Calibration) of the manuscript.
-          </div>
-        </div>
-      </div>
-    </section>
+<section class="figure-card" id="fig9">
+  <h2>Figure 9. Iso-N curves and welfare</h2>
+  <div class="subtitle">Market-structure observables under-identify welfare</div>
+  <p class="summary">
+    Heat color: consumer welfare W(&tau;, F) at fixed &sigma;.
+    The red curve is the locus of (&tau;, F) yielding the same active-seller
+    count N<sub>S</sub>. Points on the red curve are observationally equivalent
+    but generate different W.
+  </p>
+  <div class="controls" id="ctrl9"></div>
+  <div id="plot9" class="plot"></div>
+</section>
 
-    <!-- ---------- PREDICTION VIEWS (1–21, skipping 6) ---------- -->
-    <!--
-      Each prediction view follows a uniform template:
-        - page-header with crumb, title, lede (prediction statement)
-        - pred-layout (text panel + plot panel)
-        - pred-nav (prev / home / next)
-    -->
+</main>
 
-    <section class="view" data-view="pred-1">
-      <div class="page-header">
-        <div class="crumb">Prediction 1 · Empirically tested</div>
-        <h2>1P listings are priced below 3P listings within a market</h2>
-        <div class="lede">The model's pricing FOCs deliver $p_S = c/(1-\tau)+1$ and $p_A = c + 1 + \tau\, p_S$. Both rise in $\tau$, but $p_S$ rises faster, so $p_A < p_S$ at every interior $\tau$.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The two curves are $p_A(\tau)$ and $p_S(\tau)$ over the feasible interval, computed from the model's pricing first-order conditions.</p>
-          <p>The shaded region between them is the within-market gap. A vertical line marks the calibrated equilibrium fee $\tau^*$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-1" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-2">
-      <div class="page-header">
-        <div class="crumb">Prediction 2 · Empirically tested</div>
-        <h2>The within-market 1P–3P price gap widens with $\tau$</h2>
-        <div class="lede">From the pricing FOCs, $p_S - p_A = \tau(c/(1-\tau)+1) - c - \tau\,p_S = c(\tau/(1-\tau) - 1)$ rises monotonically over the interior. Higher referral fees translate one-for-one (and then some) into a wider gap.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>$\Delta p(\tau) = p_S(\tau) - p_A(\tau)$ as a function of the referral fee. A vertical line marks the calibrated $\tau^*$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-2" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-3">
-      <div class="page-header">
-        <div class="crumb">Prediction 3 · Empirically tested</div>
-        <h2>The 1P sales share rises with self-preferencing</h2>
-        <div class="lede">$s_A(\sigma, \tau) = F\,e^{\sigma-\tau}/(1-\tau)$ is strictly increasing in $\sigma$ at any fixed $\tau$. Self-preferencing converts visibility into share.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>$s_A(\sigma)$ over the range $[0, \sigma_{\max}]$, evaluated at the calibrated fee $\tau^*$.</p>
-          <p>A marker indicates the joint-optimum $\sigma^*$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-3" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-4">
-      <div class="page-header">
-        <div class="crumb">Prediction 4 · Empirically tested</div>
-        <h2>Hybrid platforms favor their own products in search rankings ($\sigma>0$)</h2>
-        <div class="lede">The platform's profit $\Pi(\sigma,\tau)$ is supermodular: at any $\tau$, the interior $\sigma$-FOC has a strictly positive solution. The 3D surface below shows $\Pi(\sigma,\tau)$ with the joint optimum $(\sigma^*, \tau^*)$ marked.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The platform's profit as a function of fee and self-preferencing. The interior peak is the joint optimum.</p>
-          <p>Strategic complementarity ($\Pi_{\sigma\tau}>0$) is visible in the ridge running through the optimum.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-4" style="height: 480px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-5">
-      <div class="page-header">
-        <div class="crumb">Prediction 5 · Empirically tested</div>
-        <h2>Hybrid platforms charge higher fees than pure marketplaces ($\tau^* > \tau^M$)</h2>
-        <div class="lede">A pure marketplace has $\sigma=0$ by construction; its equilibrium fee is $\tau^M = b_\tau(0)$. By strategic complementarity, the hybrid's joint optimum sits on a strictly higher best-response: $\tau^* = b_\tau(\sigma^*) > b_\tau(0) = \tau^M$.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The platform's best-response fee $b_\tau(\sigma)$ as a function of $\sigma$. Two markers identify $\tau^M$ (at $\sigma=0$) and $\tau^*$ (at the equilibrium $\sigma^*$).</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-5" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-7">
-      <div class="page-header">
-        <div class="crumb">Prediction 7 · Empirically tested</div>
-        <h2>Categories with higher 3P revenue ($\theta\cdot m$) are more likely to host a 1P listing</h2>
-        <div class="lede">In the dynamic extension, the platform enters category $\theta$ if and only if $\theta \ge \theta^e = K(1-\delta)/m(\sigma,\tau)$. Larger categories cross this threshold; smaller ones do not.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The category-size distribution $\theta \in [0,1]$, with the entry threshold $\theta^e$ marked.</p>
-          <p>Categories to the right of $\theta^e$ are platform-entered; to the left, marketplace-only.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-7" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-8">
-      <div class="page-header">
-        <div class="crumb">Prediction 8 · Empirically tested</div>
-        <h2>The 1P–3P gap is generated by raising 3P costs, not by below-cost 1P pricing</h2>
-        <div class="lede">$dp_S/d\tau = c/(1-\tau)^2$ dominates $dp_A/d\tau = c/(1-\tau)^2 + 1$ in absolute response (since $p_S$ rises from a smaller base in percentage terms). Empirically, our MIT within-category trends confirm: 3P prices rose 2.4% per year while 1P prices were flat.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The same two price curves as Pred 1, but with slope annotations highlighting the asymmetric responsiveness of $p_S$ vs $p_A$ to $\tau$ at the calibrated equilibrium.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-8" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-9">
-      <div class="page-header">
-        <div class="crumb">Prediction 9 · Descriptively examined</div>
-        <h2>The number of active 3P sellers ($N_S$) falls as the fee rises</h2>
-        <div class="lede">From the free-entry condition, $N_S(\tau) = (1-\tau)\,s_S(\sigma^*,\tau)/F$. Both factors decline as $\tau$ rises, so $N_S$ is strictly decreasing.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>$N_S(\tau)$ as a function of the referral fee, evaluated at the equilibrium $\sigma^*$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-9" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-10">
-      <div class="page-header">
-        <div class="crumb">Prediction 10 · Descriptively examined</div>
-        <h2>Higher consumer valuation ($v$) raises both $\tau^*$ and $\sigma^*$</h2>
-        <div class="lede">Two parameter comparative statics: $d\tau^*/dv > 0$ and $d\sigma^*/dv > 0$. Higher consumer valuation makes both the fee and self-preferencing more profitable for the platform.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The dual-axis curve plots $\tau^*(v)$ and $\sigma^*(v)$ over a range around the calibrated value of $v$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-10" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-11">
-      <div class="page-header">
-        <div class="crumb">Prediction 11 · Descriptively examined</div>
-        <h2>The platform's footprint ($Y$) rises over time, following a transitional ratchet</h2>
-        <div class="lede">The fee path satisfies $\tau^M < \tau^0 < \tau_{ss}$: the platform raises $\tau$ above the pure-marketplace level immediately upon any category entry, then ratchets further as the footprint accumulates.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>$Y_t$ and $\tau_t$ over the dynamic transition, with horizontal references at $\tau^M$, $\tau^0$, and $\tau_{ss}$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-11" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-12">
-      <div class="page-header">
-        <div class="crumb">Prediction 12 · Descriptively examined</div>
-        <h2>Self-preferencing harms consumers primarily through its effect on the fee</h2>
-        <div class="lede">Consumer welfare $W$ depends only on $\tau$, not directly on $\sigma$. Hence at fixed $\tau$, $W(\sigma)$ is flat ($W_\sigma = 0$). But the platform's best-response $\tau = b_\tau(\sigma)$ rises in $\sigma$, so along the equilibrium path $W$ falls.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>Two curves: $W(\sigma \mid \tau^*\text{ fixed})$ (the flat one — Pred 19) and $W(\sigma \mid \tau=b_\tau(\sigma))$ (declining).</p>
-          <p>The shaded gap between them quantifies the indirect channel: how much welfare loss is mediated by the platform's fee response.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-12" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-13">
-      <div class="page-header">
-        <div class="crumb">Prediction 13 · Descriptively examined</div>
-        <h2>Pure marketplaces have higher 3P-seller density than hybrid platforms</h2>
-        <div class="lede">Combining Pred 5 ($\tau^M<\tau^*$) and Pred 9 ($N_S$ decreasing in $\tau$): a pure marketplace has fewer-fee, more-seller equilibrium; a hybrid has more-fee, fewer-seller.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>Two bars compare $N_S$ at the pure-marketplace equilibrium ($\sigma=0, \tau^M$) and the hybrid equilibrium ($\sigma^*, \tau^*$).</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-13" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-14">
-      <div class="page-header">
-        <div class="crumb">Prediction 14 · Future / structural</div>
-        <h2>When the platform enters a category, the fringe share $s_S$ falls discretely</h2>
-        <div class="lede">A category transitions from marketplace-only (no $\sigma$, fee $\tau^M$) to platform-entered ($\sigma^*, \tau_t$). At the moment of entry, 3P share drops by approximately $s_A(\sigma^*, \tau_t)$.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>The simulated category-level $s_S$ trajectory across an entry event: flat at the marketplace-only level, then a discrete fall as $s_A$ takes share.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-14" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-15">
-      <div class="page-header">
-        <div class="crumb">Prediction 15 · Future / structural</div>
-        <h2>Higher fees ($\tau$) reduce 3P investment in product innovation</h2>
-        <div class="lede">The seller's innovation FOC gives $\rho'(I^*)\,\theta\,\pi^{inn}_S(\tau) = 1$. With $\pi^{inn}_S$ declining in $\tau$ (since per-consumer profit is squeezed), $I^*(\tau)$ is decreasing.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>A stylized $I^*(\tau)$: the seller's optimal innovation effort as a function of the platform's fee, under a CES innovation success function $\rho(I) = 1 - e^{-rI}$ with normalized parameters.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-15" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-16">
-      <div class="page-header">
-        <div class="crumb">Prediction 16 · Future / structural</div>
-        <h2>Capping $\tau$ lowers equilibrium $\sigma^*$, and vice versa</h2>
-        <div class="lede">By strategic complementarity, the platform's best responses $b_\sigma(\tau)$ and $b_\tau(\sigma)$ are both increasing. A regulatory cap on one instrument propagates to the other through the equilibrium.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>Two panels. Left: $\sigma^*(\bar\tau)$ — the equilibrium self-preferencing as a function of a binding fee cap $\bar\tau$. Right: $\tau^*(\bar\sigma)$ — the equilibrium fee as a function of a binding self-preferencing cap $\bar\sigma$.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-16" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-17">
-      <div class="page-header">
-        <div class="crumb">Prediction 17 · Future / structural</div>
-        <h2>Long-run welfare loss has static and dynamic components</h2>
-        <div class="lede">The long-run loss decomposes into a starting-tilt piece ($\tau^M \to \tau^0$, from immediate $\lambda Y^e$ entry) and a transitional ratchet piece ($\tau^0 \to \tau_{ss}$, from further footprint accumulation).</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>A stacked bar showing the two components of the long-run consumer-welfare loss relative to the pure-marketplace benchmark.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-17" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-18">
-      <div class="page-header">
-        <div class="crumb">Prediction 18 · Future / structural</div>
-        <h2>Long-run footprint rises in $\delta$, falls in $K$; entry speed $\lambda$ accelerates without altering the steady state</h2>
-        <div class="lede">The steady-state threshold $\theta^e_{ss} = K(1-\delta)/m$ delivers $\partial Y_{ss}/\partial \delta > 0$, $\partial Y_{ss}/\partial K < 0$, $\partial Y_{ss}/\partial \lambda = 0$. $\lambda$ affects only the transition shape.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>Three small panels: $Y_{ss}(\delta)$, $Y_{ss}(K)$, and overlaid transition curves $Y_t$ for three values of $\lambda$ (all converging to the same steady state).</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-18" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-19">
-      <div class="page-header">
-        <div class="crumb">Prediction 19 · Future / structural</div>
-        <h2>The direct effect of $\sigma$ on consumer welfare, holding $\tau$ fixed, is exactly zero</h2>
-        <div class="lede">$W$ depends only on $\tau$ via consumer surplus $\ln D$, and $D$ is pinned down by the 3P free-entry condition that depends only on $\tau$ (not $\sigma$). The 3P market absorbs all of $\sigma$'s effect, leaving $W_\sigma = 0$.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>$W(\sigma)$ with $\tau$ held fixed at the equilibrium value — a flat line. Compare to Pred 12 for the indirect channel.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-19" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-20">
-      <div class="page-header">
-        <div class="crumb">Prediction 20 · Future / structural</div>
-        <h2>The platform's privately optimal fee exceeds the welfare-maximizing fee: $\tau^W < \tau^*$</h2>
-        <div class="lede">The platform internalizes $\Pi'(\tau) = 0$ but ignores $W'(\tau) < 0$. The welfare-maximizing fee $\tau^W$ satisfies $W'(\tau^W) + \Pi'(\tau^W) = 0$, and lies strictly below $\tau^*$.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>$W(\tau)$ and $\Pi(\tau)$ on dual axes, with $\tau^W$ and $\tau^*$ marked. The shaded region between them is the deadweight loss.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-20" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-    <section class="view" data-view="pred-21">
-      <div class="page-header">
-        <div class="crumb">Prediction 21 · Future / structural</div>
-        <h2>Combined regulation yields strictly higher consumer welfare than either single-instrument regime</h2>
-        <div class="lede">By strategic complementarity, capping one instrument tightens the equilibrium of the other. A combined regime (fee cap and non-discrimination mandate) is strictly more welfare-improving than either alone.</div>
-      </div>
-      <div class="pred-layout">
-        <div class="pred-text">
-          <h4>What you're seeing</h4>
-          <p>Four bars compare consumer welfare $W$ under: laissez-faire, fee cap only, non-discrimination only, and combined regulation.</p>
-        </div>
-        <div class="pred-figure"><div id="plot-pred-21" style="height: 420px;"></div></div>
-      </div>
-      <div class="pred-nav"></div>
-    </section>
-
-  </main>
-</div>
-
-<!-- ====================================================================== -->
-<!-- ============================== SCRIPTS =============================== -->
-<!-- ====================================================================== -->
+<footer>
+  Companion to the paper.
+  R scripts that generated the static figures are in
+  <code>code/</code>.
+</footer>
 
 <script>
-// ============================================================================
-// Static catalogue of predictions (for home cards and navigation)
-// ============================================================================
-const PREDICTIONS = [
-  { n:  1, title: "1P listings are priced below 3P listings within a market.",                                       group: "A" },
-  { n:  2, title: "The within-market 1P–3P price gap widens with the referral fee ($\\tau$).",                       group: "A" },
-  { n:  3, title: "The 1P sales share ($s_A$) rises with self-preferencing ($\\sigma$).",                            group: "A" },
-  { n:  4, title: "Hybrid platforms favor their own products in search rankings ($\\sigma>0$).",                     group: "A" },
-  { n:  5, title: "Hybrid platforms charge higher fees than pure marketplaces ($\\tau^*>\\tau^M$).",                 group: "A" },
-  { n:  6, title: "Within a hybrid platform, fees ($\\tau$) are higher in categories with greater 1P presence ($s_A$).", group: "A", deferred: true },
-  { n:  7, title: "Categories with higher 3P revenue (a proxy for $\\theta\\cdot m$) are more likely to host a 1P listing.", group: "A" },
-  { n:  8, title: "The 1P–3P gap is generated by raising 3P costs, not by below-cost 1P pricing.",                   group: "A" },
-  { n:  9, title: "The number of 3P sellers ($N_S$) falls as the fee ($\\tau$) rises.",                              group: "B" },
-  { n: 10, title: "Higher consumer valuation ($v$) raises both $\\tau^*$ and $\\sigma^*$.",                          group: "B" },
-  { n: 11, title: "The platform's footprint ($Y$) rises over time, following a transitional ratchet.",               group: "B" },
-  { n: 12, title: "Self-preferencing ($\\sigma$) harms consumer welfare ($W$) primarily through its effect on the fee ($\\tau$).", group: "B" },
-  { n: 13, title: "Pure marketplaces have higher 3P-seller density per unit of GMV than hybrid platforms.",          group: "B" },
-  { n: 14, title: "When the platform enters a category, the fringe share ($s_S$) falls discretely.",                 group: "C" },
-  { n: 15, title: "Higher fees ($\\tau$) reduce 3P investment in product innovation.",                               group: "C" },
-  { n: 16, title: "Capping the fee ($\\tau$) lowers equilibrium self-preferencing ($\\sigma^*$), and vice versa.",   group: "C" },
-  { n: 17, title: "Long-run welfare loss accrues from both a static fee-tilt and a transitional ratchet.",           group: "C" },
-  { n: 18, title: "Long-run footprint rises in $\\delta$, falls in $K$; $\\lambda$ accelerates the transition without altering the steady state.", group: "C" },
-  { n: 19, title: "The direct effect of $\\sigma$ on $W$, holding $\\tau$ fixed, is exactly zero.",                  group: "C" },
-  { n: 20, title: "The platform's privately optimal fee exceeds the welfare-maximizing fee ($\\tau^W<\\tau^*$).",    group: "C" },
-  { n: 21, title: "Combined regulation yields strictly higher consumer welfare than either single-instrument regime.", group: "C" },
-];
+const PARAMS = {
+  v: 13.1753747156,
+  c: 8,
+  c_A: 8,
+  F: 0.3094478571,
+  psi_a: 0.1340640092,
+  psi_b: 2,
+  delta: 0.95,
+  lambda: 0.5,
+  K: 1
+};
 
-// ============================================================================
-// Math: closed-form derivations under c_A = c and psi(sigma) = alpha * e^(2 sigma)
-// ============================================================================
+function psi(sigma, p)       { return p.psi_a * Math.exp(p.psi_b * sigma); }
+function p_S(tau, p)         { return p.c / (1 - tau) + 1; }
+function D_closed(tau, p) {
+  return (1 - tau) * Math.exp(p.v - p.c / (1 - tau) - 1) / p.F;
+}
+function R_share(tau, p)     { return 1 / D_closed(tau, p); }
+function s_A_reduced(sigma, tau, p) {
+  return p.F * Math.exp(sigma - tau) / (1 - tau);
+}
+function s_S_share(sigma, tau, p) {
+  return Math.max(0, 1 - s_A_reduced(sigma, tau, p) - R_share(tau, p));
+}
+function N_S(sigma, tau, p) {
+  return (1 - tau) * s_S_share(sigma, tau, p) / p.F;
+}
+function P_fn(tau, p)        { return p.c * tau / (1 - tau) + tau; }
+function Pi_fn(sigma, tau, p){
+  return s_A_reduced(sigma, tau, p) + P_fn(tau, p) * (1 - R_share(tau, p))
+         - psi(sigma, p);
+}
+function W_fn(tau, p) {
+  return Math.log(1 - tau) + p.v - p.c / (1 - tau) - 1 - Math.log(p.F);
+}
+function Pi_M(tau, p) {
+  return P_fn(tau, p) * (1 - R_share(tau, p));
+}
+function m_fn(sigma, tau, p) {
+  return s_A_reduced(sigma, tau, p) - psi(sigma, p);
+}
+function theta_e(sigma, tau, p) {
+  const m = m_fn(sigma, tau, p);
+  if (m <= 0) return Infinity;
+  return p.K * (1 - p.delta) / m;
+}
+function Y_e(sigma, tau, p) {
+  const te = theta_e(sigma, tau, p);
+  if (te >= 1) return 0;
+  return (1 - te * te) / 2;
+}
+function Y_ss(sigma, tau, p) { return Y_e(sigma, tau, p); }
+function Y_path(T, sigma, tau, p) {
+  const Ye = Y_e(sigma, tau, p);
+  const arr = new Array(T + 1);
+  arr[0] = 0;
+  for (let t = 1; t <= T; t++) {
+    arr[t] = (1 - p.lambda) * arr[t - 1] + p.lambda * Ye;
+  }
+  return arr;
+}
 
-function makeModel(p) {
-  const { c, F, v, alpha, delta, lambda, K } = p;
-  const Theta = 0.5;
+function br_sigma(tau, p) {
+  if (Math.abs(p.psi_b - 1) < 1e-12) return NaN;
+  const num = Math.log(p.psi_a * p.psi_b) - Math.log(p.F)
+            + tau + Math.log(1 - tau);
+  return num / (1 - p.psi_b);
+}
 
-  function sigmaOfTau(tau) {
-    const arg = (F * Math.exp(-tau)) / (2 * alpha * (1 - tau));
-    return Math.log(arg);
+function bisect(f, lo, hi, tol = 1e-7, maxIter = 100) {
+  let flo = f(lo), fhi = f(hi);
+  if (flo === undefined || isNaN(flo) || fhi === undefined || isNaN(fhi)) return NaN;
+  if (flo * fhi > 0) return NaN;
+  for (let i = 0; i < maxIter; i++) {
+    const mid = 0.5 * (lo + hi);
+    const fmid = f(mid);
+    if (isNaN(fmid)) return NaN;
+    if (Math.abs(fmid) < tol) return mid;
+    if (flo * fmid < 0) { hi = mid; fhi = fmid; }
+    else                { lo = mid; flo = fmid; }
+    if (hi - lo < tol) return 0.5 * (lo + hi);
   }
-  function sA(sigma, tau) {
-    return (F * Math.exp(sigma - tau)) / (1 - tau);
-  }
-  function R(tau) {
-    return (F * Math.exp(1 - v + c / (1 - tau))) / (1 - tau);
-  }
-  function P(tau) {
-    return (c * tau) / (1 - tau) + tau;
-  }
-  function psi(sigma) {
-    return alpha * Math.exp(2 * sigma);
-  }
-  function piM(tau) {
-    return P(tau) * (1 - R(tau));
-  }
-  function piM_prime(tau) {
-    const q = 1 - tau;
-    const P_tau = 1 + c / (q * q);
-    const R_val = R(tau);
-    const R_tau = R_val * (1 / q + c / (q * q));
-    return P_tau * (1 - R_val) - P(tau) * R_tau;
-  }
-  function jointTauFOC(tau) {
-    const sigma = sigmaOfTau(tau);
-    const sA_val = sA(sigma, tau);
-    const q = 1 - tau;
-    const term1 = sA_val * tau / q;
-    const term2 = piM_prime(tau);
-    return term1 + term2;
-  }
-  function bisect(fn, lo, hi, maxIter = 200) {
-    while (hi > lo) {
-      const fHi = fn(hi);
-      if (Number.isFinite(fHi)) break;
-      hi -= 0.01;
-    }
-    if (hi <= lo) return null;
-    let fLo = fn(lo), fHi = fn(hi);
-    if (!(Number.isFinite(fLo) && Number.isFinite(fHi) && fLo * fHi < 0)) {
-      let found = false, prev_t = lo, prev_f = fLo;
-      for (let t = lo + 0.001; t <= hi; t += 0.001) {
-        const f = fn(t);
-        if (!Number.isFinite(f)) continue;
-        if (Number.isFinite(prev_f) && prev_f * f < 0) {
-          lo = prev_t; hi = t; fLo = prev_f; fHi = f; found = true; break;
-        }
-        prev_t = t; prev_f = f;
-      }
-      if (!found) return null;
-    }
-    for (let i = 0; i < maxIter; i++) {
-      const mid = 0.5 * (lo + hi);
-      const fMid = fn(mid);
-      if (!Number.isFinite(fMid)) return null;
-      if (Math.abs(fMid) < 1e-12) return mid;
-      if (fLo * fMid < 0) { hi = mid; fHi = fMid; } else { lo = mid; fLo = fMid; }
-    }
-    return 0.5 * (lo + hi);
-  }
-  function findTauStar() { return bisect(jointTauFOC, 0.0001, 0.95); }
-  function findTauM()    { return bisect(piM_prime,   0.0001, 0.95); }
+  return 0.5 * (lo + hi);
+}
 
-  function W(tau) {
-    return Math.log(1 - tau) + v - c / (1 - tau) - 1 - Math.log(F);
-  }
+function br_tau(sigma, p) {
+  const eps = 1e-5;
+  const f = tau => (Pi_fn(sigma, tau + eps, p) - Pi_fn(sigma, tau - eps, p))
+                   / (2 * eps);
+  return bisect(f, 0.01, 0.6);
+}
 
-  function thetaE(m_val) { return (K * (1 - delta)) / m_val; }
-  function YeFromTheta(theta_e) {
-    if (theta_e <= 0) return 0.5;
-    if (theta_e >= 1) return 0;
-    return (1 - theta_e * theta_e) / 2;
-  }
-  function muFromTheta(theta_e) {
-    if (theta_e <= 0) return 1;
-    if (theta_e >= 1) return 0;
-    return 1 - theta_e;
-  }
-
-  function findTauSS(sigmaStar) {
-    function residual(tau) {
-      const sA_val = sA(sigmaStar, tau);
-      const m_val = sA_val - psi(sigmaStar);
-      if (m_val <= 0) return null;
-      const Y_val = YeFromTheta(thetaE(m_val));
-      const sA_tau = sA_val * tau / (1 - tau);
-      return Theta * piM_prime(tau) + Y_val * sA_tau;
-    }
-    return bisect(residual, 0.0001, 0.95);
-  }
-  function findTauZero(sigmaStar) {
-    function residual(tau) {
-      const sA_val = sA(sigmaStar, tau);
-      const m_val = sA_val - psi(sigmaStar);
-      if (m_val <= 0) return null;
-      const Ye_val = YeFromTheta(thetaE(m_val));
-      const sA_tau = sA_val * tau / (1 - tau);
-      return Theta * piM_prime(tau) + lambda * Ye_val * sA_tau;
-    }
-    return bisect(residual, 0.0001, 0.95);
-  }
-  function tauAtFootprint(Y_next, sigmaStar) {
-    function residual(tau) {
-      const sA_val = sA(sigmaStar, tau);
-      const sA_tau = sA_val * tau / (1 - tau);
-      return Theta * piM_prime(tau) + Y_next * sA_tau;
-    }
-    return bisect(residual, 0.0001, 0.95, 100);
-  }
-  // Best-response tau given sigma (used in static regime comparisons)
-  function bTauOfSigma(sigma) {
-    function foc(tau) {
-      const sA_val = sA(sigma, tau);
-      return sA_val * tau / (1 - tau) + piM_prime(tau);
-    }
-    return bisect(foc, 0.0001, 0.95);
-  }
-  // Best-response sigma given tau (closed-form via sigmaOfTau)
-  function bSigmaOfTau(tau) { return sigmaOfTau(tau); }
-
-  return {
-    Theta, sigmaOfTau, sA, R, P, psi, piM, piM_prime,
-    findTauStar, findTauM, findTauSS, findTauZero, tauAtFootprint,
-    bTauOfSigma, bSigmaOfTau,
-    W, thetaE, YeFromTheta, muFromTheta,
-    // expose primitives
-    c, F, v, alpha, delta, lambda, K
+function joint_eq(p) {
+  const f = tau => {
+    const s = br_sigma(tau, p);
+    if (isNaN(s) || s < 0 || s > 0.5) return NaN;
+    const eps = 1e-5;
+    return (Pi_fn(s, tau + eps, p) - Pi_fn(s, tau - eps, p)) / (2 * eps);
   };
+  const tau = bisect(f, 0.05, 0.55);
+  if (isNaN(tau)) return { sigma: NaN, tau: NaN };
+  return { sigma: br_sigma(tau, p), tau };
 }
 
-// ============================================================================
-// UI parameter wiring
-// ============================================================================
+function tau_W_solve(p) {
+  const eps = 1e-5;
+  const f = tau => {
+    const tsP = W_fn(tau + eps, p) + Pi_M(tau + eps, p);
+    const tsM = W_fn(tau - eps, p) + Pi_M(tau - eps, p);
+    return (tsP - tsM) / (2 * eps);
+  };
+  if (f(0.005) < 0) return 0;
+  return bisect(f, 0.005, 0.55);
+}
 
-const DEFAULTS = {
-  c: 8, F: 0.3094478571, v: 13.1753747156,
-  alpha: 0.1340640092, delta: 0.95, lambda: 0.5, K: 1
+const PARAM_SPECS = {
+  v:      { label: "Consumer valuation v",  min: 8,    max: 20,   step: 0.1, fmt: 2 },
+  c:      { label: "3P marginal cost c",    min: 3,    max: 15,   step: 0.1, fmt: 2 },
+  c_A:    { label: "Platform cost c_A",     min: 3,    max: 15,   step: 0.1, fmt: 2 },
+  F:      { label: "3P fixed cost F",       min: 0.05, max: 1.0,  step: 0.01,fmt: 3 },
+  psi_a:  { label: "Visibility cost a",     min: 0.03, max: 0.3,  step: 0.005,fmt: 3 },
+  psi_b:  { label: "Visibility curvature b",min: 1.2,  max: 3.5,  step: 0.05,fmt: 2 },
+  delta:  { label: "Discount factor delta", min: 0.80, max: 0.995,step: 0.005,fmt: 3 },
+  lambda: { label: "Entry speed lambda",    min: 0.05, max: 0.95, step: 0.05,fmt: 2 },
+  K:      { label: "Per-category entry cost K",
+                                            min: 0.2,  max: 3.0,  step: 0.05,fmt: 2 }
 };
-const PARAMS = ['c', 'F', 'v', 'alpha', 'delta', 'lambda', 'K'];
 
-function getParams() {
-  const p = {};
-  PARAMS.forEach(k => { p[k] = parseFloat(document.getElementById(k).value); });
-  return p;
+function makeControl(container, keys, params, onChange) {
+  container.innerHTML = "";
+  const local = { ...params };
+  keys.forEach(k => {
+    const spec = PARAM_SPECS[k];
+    if (!spec) return;
+    const div = document.createElement("div");
+    div.className = "control";
+    div.innerHTML =
+      "<label>" + spec.label +
+      " <span class=\"value\" id=\"val_" + container.id + "_" + k + "\">" +
+      local[k].toFixed(spec.fmt) + "</span></label>" +
+      "<input type=\"range\" min=\"" + spec.min + "\" max=\"" + spec.max +
+      "\" step=\"" + spec.step + "\" value=\"" + local[k] +
+      "\" id=\"rng_" + container.id + "_" + k + "\">";
+    container.appendChild(div);
+    const input = div.querySelector("input");
+    const valEl = div.querySelector(".value");
+    input.addEventListener("input", e => {
+      const v = parseFloat(e.target.value);
+      local[k] = v;
+      valEl.textContent = v.toFixed(spec.fmt);
+      if (k === "c" && !keys.includes("c_A")) {
+        local.c_A = v;
+      }
+      onChange(local);
+    });
+  });
+  const resetDiv = document.createElement("div");
+  resetDiv.className = "control";
+  resetDiv.innerHTML =
+    "<label>&nbsp;</label>" +
+    "<button class=\"reset-btn\" id=\"reset_" + container.id +
+    "\">Reset to baseline</button>";
+  container.appendChild(resetDiv);
+  resetDiv.querySelector("button").addEventListener("click", () => {
+    keys.forEach(k => {
+      local[k] = PARAMS[k];
+      document.getElementById("rng_" + container.id + "_" + k).value = PARAMS[k];
+      document.getElementById("val_" + container.id + "_" + k).textContent =
+        PARAMS[k].toFixed(PARAM_SPECS[k].fmt);
+    });
+    onChange(local);
+  });
+  onChange(local);
 }
-function setParams(p) { PARAMS.forEach(k => { document.getElementById(k).value = p[k]; }); }
-function resetDefaults() { setParams(DEFAULTS); update(); }
-function fmt(x, d = 4) {
-  if (x === null || x === undefined || !Number.isFinite(x)) return "—";
-  return Number(x).toFixed(d);
+
+function linspace(a, b, n) {
+  const out = new Array(n);
+  for (let i = 0; i < n; i++) out[i] = a + (b - a) * i / (n - 1);
+  return out;
 }
-function showWarning(msg) { const el = document.getElementById("warn"); el.textContent = msg; el.classList.add("show"); }
-function clearWarning()   { document.getElementById("warn").classList.remove("show"); }
 
-// ============================================================================
-// Plotly shared style
-// ============================================================================
+function drawFig1(p) {
+  const tau_grid = linspace(0.05, 0.55, 80);
+  const sig_grid = linspace(0.01, 0.40, 80);
+  const br_s_pts = tau_grid.map(t => ({ tau: t, sigma: br_sigma(t, p) }))
+                           .filter(d => d.sigma > 0 && d.sigma < 0.5);
+  const br_t_pts = sig_grid.map(s => ({ sigma: s, tau: br_tau(s, p) }))
+                           .filter(d => !isNaN(d.tau) && d.tau > 0 && d.tau < 0.7);
+  const eq = joint_eq(p);
+  const tauM = br_tau(0, p);
 
-const FONT_FAMILY = '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-const AXIS_INK    = "#374151";
-const AXIS_LINE   = "#cbd5e0";
-const GRID_COLOR  = "#eef0f3";
-const COL = {
-  navy:   "#1F4E79",
-  maroon: "#8A1538",
-  forest: "#1B6B4A",
-  slate:  "#4A5568",
-  gold:   "#B7791F"
-};
-const PLOT_CFG = { displayModeBar: false, responsive: true };
-
-function baseLayout(opts) {
-  opts = opts || {};
-  return {
-    margin: opts.margin || { l: 60, r: 24, t: 14, b: 56 },
-    height: opts.height || 380,
-    font: { family: FONT_FAMILY, size: 11, color: "#1f2937" },
-    plot_bgcolor: "#fff",
-    paper_bgcolor: "#fff",
-    showlegend: opts.showlegend !== undefined ? opts.showlegend : true,
-    legend: opts.legend || {
-      orientation: "h", y: -0.22, x: 0, xanchor: "left",
-      font: { size: 10, color: AXIS_INK },
-      bgcolor: "rgba(255,255,255,0)"
+  const traces = [
+    {
+      x: br_t_pts.map(d => d.sigma), y: br_t_pts.map(d => d.tau),
+      mode: "lines", name: "b_tau(sigma)",
+      line: { color: "#012169", width: 3 }
     },
-    hoverlabel: { font: { family: FONT_FAMILY, size: 11 }, bordercolor: AXIS_LINE }
-  };
-}
-function xStyle(title) {
-  return {
-    title: { text: title, font: { size: 11, color: AXIS_INK }, standoff: 8 },
-    showline: true, linecolor: AXIS_LINE, linewidth: 1,
-    showgrid: false, zeroline: false,
-    ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
-    tickfont: { size: 10, color: "#6b7280" }
-  };
-}
-function yStyle(title) {
-  return {
-    title: { text: title, font: { size: 11, color: AXIS_INK }, standoff: 6 },
-    showline: true, linecolor: AXIS_LINE, linewidth: 1,
-    showgrid: true, gridcolor: GRID_COLOR, gridwidth: 1,
-    zeroline: false,
-    ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
-    tickfont: { size: 10, color: "#6b7280" }
-  };
-}
-
-// ============================================================================
-// Router
-// ============================================================================
-
-function currentRoute() {
-  const hash = (window.location.hash || '#/home').replace(/^#/, '');
-  // Accept "#/home", "#/dashboard", "#/pred/N"
-  const m = hash.match(/^\/pred\/(\d+)$/);
-  if (m) return 'pred-' + m[1];
-  if (hash === '/dashboard') return 'dashboard';
-  return 'home';
-}
-
-function navigateToRoute() {
-  const route = currentRoute();
-  // Show only matching view
-  document.querySelectorAll('.view').forEach(v => {
-    v.classList.toggle('active', v.getAttribute('data-view') === route);
-  });
-  // Highlight active sidebar link
-  document.querySelectorAll('.nav-list a').forEach(a => {
-    a.classList.toggle('active', a.getAttribute('data-route') === route);
-  });
-  // Render whatever's now visible
-  update();
-  // Scroll the main area to top
-  document.querySelector('.main').scrollTop = 0;
-  window.scrollTo(0, 0);
-}
-
-window.addEventListener('hashchange', navigateToRoute);
-
-// ============================================================================
-// Render: home page
-// ============================================================================
-
-function renderHome() {
-  const groups = { A: 'pred-grid-A', B: 'pred-grid-B', C: 'pred-grid-C' };
-  Object.values(groups).forEach(id => { document.getElementById(id).innerHTML = ''; });
-  PREDICTIONS.forEach(p => {
-    const container = document.getElementById(groups[p.group]);
-    if (!container) return;
-    const card = document.createElement('a');
-    card.className = 'pred-card' + (p.deferred ? ' deferred' : '');
-    card.href = p.deferred ? '#/home' : '#/pred/' + p.n;
-    card.innerHTML = `
-      <div class="pred-num">Prediction ${p.n}</div>
-      <div class="pred-title">${p.title}</div>
-      ${p.deferred ? '<div class="pred-tag deferred">Deferred (cross-sectional)</div>' : ''}
-    `;
-    container.appendChild(card);
-  });
-  if (window.renderMathInElement) {
-    document.querySelectorAll('.pred-grid').forEach(g => {
-      renderMathInElement(g, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
-    });
-  }
-}
-
-// ============================================================================
-// Render: prediction navigation (prev / home / next)
-// ============================================================================
-
-function renderPredNav(n) {
-  // Adjacent predictions (skipping deferred)
-  const ns = PREDICTIONS.filter(p => !p.deferred).map(p => p.n);
-  const idx = ns.indexOf(n);
-  const prev = (idx > 0) ? ns[idx - 1] : null;
-  const next = (idx < ns.length - 1) ? ns[idx + 1] : null;
-  const navEl = document.querySelector(`section[data-view="pred-${n}"] .pred-nav`);
-  if (!navEl) return;
-  navEl.innerHTML = `
-    <a href="${prev ? '#/pred/' + prev : '#/home'}" class="${prev ? '' : 'disabled'}">${prev ? '← Prediction ' + prev : '← Home'}</a>
-    <a href="#/home">Home</a>
-    <a href="${next ? '#/pred/' + next : '#/home'}" class="${next ? '' : 'disabled'}">${next ? 'Prediction ' + next + ' →' : 'Home →'}</a>
-  `;
-}
-
-// ============================================================================
-// Render: prediction plots (stubs — will be implemented in subsequent edits)
-// ============================================================================
-
-function renderPrediction(n, params, M, computed) {
-  renderPredNav(n);
-  const fn = PREDICTION_RENDERERS[n];
-  if (typeof fn === 'function') fn(params, M, computed);
-}
-
-// Assumed 1P-to-3P cost ratio for visualizations that need it (Preds 1, 2, 8).
-// Matches the FTC's per-unit fulfillment differential ($3.77 / $8.25 ≈ 0.457).
-const C_A_RATIO = 0.457;
-
-const PREDICTION_RENDERERS = {
-
-  // ---- 1: 1P below 3P ----
-  1: function(params, M, computed) {
-    const c   = params.c;
-    const c_A = C_A_RATIO * c;
-    const taus = [], pS = [], pA = [];
-    for (let t = 0.01; t <= 0.70; t += 0.01) {
-      taus.push(t);
-      const ps = c / (1 - t) + 1;
-      pS.push(ps);
-      pA.push(c_A + 1 + t * ps);
+    {
+      x: br_s_pts.map(d => d.sigma), y: br_s_pts.map(d => d.tau),
+      mode: "lines", name: "b_sigma(tau)",
+      line: { color: "#f2a900", width: 3 }
+    },
+    {
+      x: [eq.sigma], y: [eq.tau],
+      mode: "markers", name: "Hybrid equilibrium",
+      marker: { color: "#b91c1c", size: 12 }
+    },
+    {
+      x: [0], y: [tauM],
+      mode: "markers", name: "Pure-marketplace tau^M",
+      marker: { color: "#525252", size: 10, symbol: "triangle-up" }
     }
-    Plotly.react("plot-pred-1", [
-      { x: taus.concat(taus.slice().reverse()),
-        y: pA.concat(pS.slice().reverse()),
-        type: "scatter", mode: "lines",
-        fill: "toself", fillcolor: "rgba(31, 78, 121, 0.10)",
-        line: { color: "rgba(0,0,0,0)" },
-        hoverinfo: "skip", showlegend: false },
-      { x: taus, y: pS, name: "p<sub>S</sub>(τ)  3P price",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 } },
-      { x: taus, y: pA, name: "p<sub>A</sub>(τ)  1P price",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 } }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Referral fee  τ"),
-      yaxis: yStyle("Price"),
-      shapes: [
-        { type: "line", x0: computed.tauStar, x1: computed.tauStar,
-          y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.slate, width: 1.4, dash: "dot" } }
-      ],
-      annotations: [
-        { x: computed.tauStar, y: 1.04, yref: "paper",
-          text: "τ* = " + computed.tauStar.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.slate } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 2: Gap as a function of tau ----
-  2: function(params, M, computed) {
-    const c   = params.c;
-    const c_A = C_A_RATIO * c;
-    const taus = [], gap = [];
-    for (let t = 0.01; t <= 0.70; t += 0.01) {
-      taus.push(t);
-      gap.push(c - c_A - t);
-    }
-    Plotly.react("plot-pred-2", [
-      { x: taus, y: gap, name: "p<sub>S</sub> − p<sub>A</sub>",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 },
-        fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.10)" }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Referral fee  τ"),
-      yaxis: yStyle("Within-market price gap  p<sub>S</sub> − p<sub>A</sub>"),
-      shapes: [
-        { type: "line", x0: computed.tauStar, x1: computed.tauStar,
-          y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.slate, width: 1.4, dash: "dot" } }
-      ],
-      annotations: [
-        { x: computed.tauStar, y: 1.04, yref: "paper",
-          text: "τ* = " + computed.tauStar.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.slate } },
-        { x: 0.99, y: 0.10, xref: "paper", yref: "paper", xanchor: "right",
-          text: "Model: ∂(p<sub>S</sub>−p<sub>A</sub>)/∂τ = −1 (gap narrows). Empirical pattern (gap widens) is in tension with this closed form.",
-          showarrow: false, font: { size: 10, color: COL.slate } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 3: s_A rises with sigma ----
-  3: function(params, M, computed) {
-    const sigmas = [], sAs = [];
-    const sMax = Math.max(0.7, computed.sigmaStar + 0.2);
-    for (let s = -0.5; s <= sMax; s += 0.02) {
-      sigmas.push(s);
-      sAs.push(Math.min(1, M.sA(s, computed.tauStar)));
-    }
-    Plotly.react("plot-pred-3", [
-      { x: sigmas, y: sAs, name: "s<sub>A</sub>(σ)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 },
-        fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.08)" }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Self-preferencing  σ"),
-      yaxis: yStyle("1P sales share  s<sub>A</sub>"),
-      shapes: [
-        { type: "line", x0: computed.sigmaStar, x1: computed.sigmaStar,
-          y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.maroon, width: 1.4, dash: "dot" } }
-      ],
-      annotations: [
-        { x: computed.sigmaStar, y: 1.04, yref: "paper",
-          text: "σ* = " + computed.sigmaStar.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.maroon } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 4: 3D surface Pi(sigma, tau) ----
-  4: function(params, M, computed) {
-    const sigmaMin = -0.2, sigmaMax = Math.max(0.6, computed.sigmaStar + 0.2);
-    const tauMin = 0.05, tauMax = 0.7;
-    const nS = 22, nT = 22;
-    const sigmas = [], taus = [], z = [];
-    for (let i = 0; i < nS; i++) sigmas.push(sigmaMin + (sigmaMax - sigmaMin) * i / (nS - 1));
-    for (let j = 0; j < nT; j++) taus.push(tauMin + (tauMax - tauMin) * j / (nT - 1));
-    for (let i = 0; i < nS; i++) {
-      const row = [];
-      for (let j = 0; j < nT; j++) {
-        const sig = sigmas[i], tau = taus[j];
-        const sA_val = M.sA(sig, tau);
-        const R_val  = M.R(tau);
-        const P_val  = M.P(tau);
-        const psi_val = M.psi(sig);
-        const sS_val = 1 - sA_val - R_val;
-        if (!Number.isFinite(sA_val) || sA_val > 0.999 || sS_val < 0) {
-          row.push(null);
-        } else {
-          const Pi = sA_val + P_val * sS_val - psi_val;
-          row.push(Number.isFinite(Pi) ? Pi : null);
-        }
-      }
-      z.push(row);
-    }
-    Plotly.react("plot-pred-4", [
-      { x: taus, y: sigmas, z: z,
-        type: "surface",
-        colorscale: [[0, "#eef5ff"], [0.5, "#1F4E79"], [1.0, "#8A1538"]],
-        showscale: false, opacity: 0.95,
-        contours: { z: { show: true, usecolormap: true, project: { z: true } } } },
-      { x: [computed.tauStar], y: [computed.sigmaStar], z: [computed.Pi_total],
-        type: "scatter3d", mode: "markers",
-        marker: { size: 7, color: COL.gold, line: { color: "#fff", width: 1.5 } },
-        name: "Joint optimum (σ*, τ*)" }
-    ], {
-      margin: { l: 0, r: 0, t: 0, b: 0 },
-      height: 460,
-      scene: {
-        xaxis: { title: "τ", showbackground: true, backgroundcolor: "#fafafa", gridcolor: "#e0e0e0" },
-        yaxis: { title: "σ", showbackground: true, backgroundcolor: "#fafafa", gridcolor: "#e0e0e0" },
-        zaxis: { title: "Π(σ, τ)", showbackground: true, backgroundcolor: "#fafafa", gridcolor: "#e0e0e0" },
-        camera: { eye: { x: 1.6, y: -1.7, z: 0.6 } }
-      },
-      showlegend: false
-    }, PLOT_CFG);
-  },
-
-  // ---- 5: best-response b_tau(sigma) ----
-  5: function(params, M, computed) {
-    const sigmas = [], taus = [];
-    const sMax = Math.max(0.7, computed.sigmaStar + 0.2);
-    for (let s = 0; s <= sMax; s += 0.02) {
-      const bt = M.bTauOfSigma(s);
-      if (bt !== null && Number.isFinite(bt)) { sigmas.push(s); taus.push(bt); }
-    }
-    Plotly.react("plot-pred-5", [
-      { x: sigmas, y: taus, name: "b<sub>τ</sub>(σ)  best-response fee",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 } },
-      { x: [0, computed.sigmaStar], y: [computed.tauM, computed.tauStar],
-        type: "scatter", mode: "markers+text",
-        marker: { size: 11, color: [COL.forest, COL.maroon],
-                  line: { color: "#fff", width: 1.5 } },
-        text: ["  τ<sup>M</sup> (pure marketplace)", "  τ* (hybrid)"],
-        textposition: "middle right", showlegend: false }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Self-preferencing  σ"),
-      yaxis: yStyle("Equilibrium fee  τ")
-    }), PLOT_CFG);
-  },
-
-  // ---- 7: entry threshold theta^e on the size distribution ----
-  7: function(params, M, computed) {
-    const theta_e = computed.theta_e_static;
-    if (theta_e === null || !Number.isFinite(theta_e)) {
-      Plotly.react("plot-pred-7", [], baseLayout(), PLOT_CFG); return;
-    }
-    const te = Math.min(1, Math.max(0, theta_e));
-    Plotly.react("plot-pred-7", [
-      { x: [0, te, te, 0], y: [0, 0, 1, 1],
-        type: "scatter", mode: "lines", fill: "toself",
-        fillcolor: "rgba(74, 85, 104, 0.20)", line: { color: "rgba(0,0,0,0)" },
-        name: "Marketplace-only (θ &lt; θ<sup>e</sup>)" },
-      { x: [te, 1, 1, te], y: [0, 0, 1, 1],
-        type: "scatter", mode: "lines", fill: "toself",
-        fillcolor: "rgba(138, 21, 56, 0.25)", line: { color: "rgba(0,0,0,0)" },
-        name: "Platform-entered (θ ≥ θ<sup>e</sup>)" }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Category size  θ"),
-      yaxis: Object.assign(yStyle("Density g(θ) (uniform)"), { range: [0, 1.4] }),
-      shapes: [
-        { type: "line", x0: te, x1: te, y0: 0, y1: 1.2,
-          line: { color: COL.maroon, width: 2, dash: "dot" } }
-      ],
-      annotations: [
-        { x: te, y: 1.28, text: "θ<sup>e</sup> = " + te.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.maroon } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 8: 3P vs 1P slopes ----
-  8: function(params, M, computed) {
-    const c   = params.c;
-    const c_A = C_A_RATIO * c;
-    const taus = [], pS = [], pA = [];
-    for (let t = 0.01; t <= 0.70; t += 0.01) {
-      taus.push(t);
-      const ps = c / (1 - t) + 1;
-      pS.push(ps);
-      pA.push(c_A + 1 + t * ps);
-    }
-    const tStar = computed.tauStar;
-    const slope_pS = c / Math.pow(1 - tStar, 2);
-    const slope_pA = slope_pS + 1;
-    Plotly.react("plot-pred-8", [
-      { x: taus, y: pS, name: "p<sub>S</sub>(τ)  3P price",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 } },
-      { x: taus, y: pA, name: "p<sub>A</sub>(τ)  1P price",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 } }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Referral fee  τ"),
-      yaxis: yStyle("Price"),
-      shapes: [
-        { type: "line", x0: tStar, x1: tStar, y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.slate, width: 1.4, dash: "dot" } }
-      ],
-      annotations: [
-        { x: tStar, y: 1.04, yref: "paper",
-          text: "τ* = " + tStar.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.slate } },
-        { x: 0.99, y: 0.10, xref: "paper", yref: "paper", xanchor: "right",
-          text: "Model slopes at τ*:  dp<sub>S</sub>/dτ ≈ " + slope_pS.toFixed(2) +
-                ",  dp<sub>A</sub>/dτ ≈ " + slope_pA.toFixed(2) +
-                ".  Model has 1P rising faster than 3P; the empirical pattern is the opposite.",
-          showarrow: false, font: { size: 10, color: COL.slate } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 9: N_S falls with tau ----
-  9: function(params, M, computed) {
-    const taus = [], Ns = [];
-    const sigma = computed.sigmaStar;
-    for (let t = 0.01; t <= 0.70; t += 0.01) {
-      const sA_val = M.sA(sigma, t);
-      const R_val  = M.R(t);
-      const sS_val = Math.max(0, 1 - sA_val - R_val);
-      taus.push(t);
-      Ns.push((1 - t) * sS_val / params.F);
-    }
-    Plotly.react("plot-pred-9", [
-      { x: taus, y: Ns, name: "N<sub>S</sub>(τ)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 },
-        fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.08)" }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Referral fee  τ"),
-      yaxis: yStyle("Active 3P sellers  N<sub>S</sub>"),
-      shapes: [
-        { type: "line", x0: computed.tauStar, x1: computed.tauStar,
-          y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.maroon, width: 1.4, dash: "dot" } }
-      ],
-      annotations: [
-        { x: computed.tauStar, y: 1.04, yref: "paper",
-          text: "τ* = " + computed.tauStar.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.maroon } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 10: tau*(v) and sigma*(v) ----
-  10: function(params, M, computed) {
-    const vs = [], tauStars = [], sigmaStars = [];
-    const vMin = Math.max(8, params.v - 3);
-    const vMax = Math.min(20, params.v + 3);
-    for (let v = vMin; v <= vMax; v += 0.15) {
-      const p2 = Object.assign({}, params, { v });
-      const M2 = makeModel(p2);
-      const ts = M2.findTauStar();
-      if (ts === null || !Number.isFinite(ts)) continue;
-      vs.push(v); tauStars.push(ts); sigmaStars.push(M2.sigmaOfTau(ts));
-    }
-    Plotly.react("plot-pred-10", [
-      { x: vs, y: tauStars, name: "τ*(v)",
-        type: "scatter", mode: "lines", yaxis: "y",
-        line: { color: COL.navy, width: 2.4 } },
-      { x: vs, y: sigmaStars, name: "σ*(v)",
-        type: "scatter", mode: "lines", yaxis: "y2",
-        line: { color: COL.maroon, width: 2.4, dash: "dashdot" } }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Consumer valuation  v"),
-      yaxis: Object.assign(yStyle("τ*"), { side: "left" }),
-      yaxis2: { title: { text: "σ*", font: { size: 11, color: AXIS_INK }, standoff: 6 },
-                overlaying: "y", side: "right", showline: true, linecolor: AXIS_LINE,
-                showgrid: false, ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
-                tickfont: { size: 10, color: "#6b7280" } },
-      shapes: [
-        { type: "line", x0: params.v, x1: params.v, y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.slate, width: 1.4, dash: "dot" } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 11: Y_t and tau_t with tau^M reference ----
-  11: function(params, M, computed) {
-    if (computed.Y_static === null) {
-      Plotly.react("plot-pred-11", [], baseLayout(), PLOT_CFG); return;
-    }
-    const T_max = 30;
-    const ts = [], Ys = [], taus_t = [];
-    for (let t = 0; t <= T_max; t++) {
-      const f = 1 - Math.pow(1 - params.lambda, t);
-      const f_next = 1 - Math.pow(1 - params.lambda, t + 1);
-      const Y_t_val = computed.Y_static * f;
-      const Y_next  = computed.Y_static * f_next;
-      const tau_t = M.tauAtFootprint(Y_next, computed.sigmaStar);
-      if (tau_t === null || !Number.isFinite(tau_t)) continue;
-      ts.push(t); Ys.push(Y_t_val); taus_t.push(tau_t);
-    }
-    Plotly.react("plot-pred-11", [
-      { x: ts, y: Ys, name: "Y<sub>t</sub>  footprint",
-        type: "scatter", mode: "lines", yaxis: "y",
-        line: { color: COL.navy, width: 2.4, shape: "spline", smoothing: 0.5 } },
-      { x: ts, y: taus_t, name: "τ<sub>t</sub>  fee",
-        type: "scatter", mode: "lines", yaxis: "y2",
-        line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.5 } }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Period  t"),
-      yaxis: Object.assign(yStyle("Y<sub>t</sub>"), { side: "left" }),
-      yaxis2: { title: { text: "τ<sub>t</sub>", font: { size: 11, color: AXIS_INK }, standoff: 6 },
-                overlaying: "y", side: "right", showline: true, linecolor: AXIS_LINE,
-                showgrid: false, ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
-                tickfont: { size: 10, color: "#6b7280" } },
-      shapes: [
-        { type: "line", x0: 0, x1: 1, xref: "paper",
-          y0: computed.tauM, y1: computed.tauM, yref: "y2",
-          line: { color: COL.forest, width: 1.2, dash: "dash" } }
-      ],
-      annotations: [
-        { x: T_max, y: computed.tauM, yref: "y2",
-          text: "  τ<sup>M</sup>", showarrow: false,
-          font: { size: 10, color: COL.forest }, xanchor: "left" }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 12: indirect channel sigma -> tau -> W ----
-  12: function(params, M, computed) {
-    const sigmas = [], W_fixed = [], W_eq = [];
-    const sMax = Math.max(0.6, computed.sigmaStar + 0.2);
-    for (let s = 0; s <= sMax; s += 0.02) {
-      sigmas.push(s);
-      W_fixed.push(computed.W_star);
-      const tau_eq = M.bTauOfSigma(s);
-      W_eq.push((tau_eq !== null && Number.isFinite(tau_eq)) ? M.W(tau_eq) : null);
-    }
-    Plotly.react("plot-pred-12", [
-      { x: sigmas.concat(sigmas.slice().reverse()),
-        y: W_fixed.concat(W_eq.slice().reverse()),
-        type: "scatter", mode: "lines", fill: "toself",
-        fillcolor: "rgba(138, 21, 56, 0.10)", line: { color: "rgba(0,0,0,0)" },
-        name: "Indirect channel", hoverinfo: "skip", showlegend: false },
-      { x: sigmas, y: W_fixed, name: "W(σ | τ fixed) — Pred 19",
-        type: "scatter", mode: "lines",
-        line: { color: COL.forest, width: 2.4, dash: "dash" } },
-      { x: sigmas, y: W_eq, name: "W(σ | τ = b<sub>τ</sub>(σ)) — total",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 } }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Self-preferencing  σ"),
-      yaxis: yStyle("Consumer welfare  W"),
-      shapes: [
-        { type: "line", x0: computed.sigmaStar, x1: computed.sigmaStar,
-          y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.slate, width: 1.4, dash: "dot" } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 13: pure vs hybrid N_S ----
-  13: function(params, M, computed) {
-    const N_pure   = (1 - computed.tauM) * Math.max(0, 1 - M.R(computed.tauM)) / params.F;
-    const N_hybrid = computed.N_star;
-    Plotly.react("plot-pred-13", [
-      { x: ["Pure marketplace<br>(σ=0, τ<sup>M</sup>)", "Hybrid platform<br>(σ*, τ*)"],
-        y: [N_pure, N_hybrid],
-        type: "bar",
-        marker: { color: [COL.forest, COL.maroon], line: { color: "#fff", width: 1.5 } },
-        text: [N_pure.toFixed(2), N_hybrid.toFixed(2)],
-        textposition: "outside", width: 0.5 }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: { showline: true, linecolor: AXIS_LINE,
-               tickfont: { size: 11, color: "#1f2937" }, automargin: true },
-      yaxis: yStyle("Active 3P sellers per category  N<sub>S</sub>"),
-      bargap: 0.5
-    }), PLOT_CFG);
-  },
-
-  // ---- 14: s_S over time at category-entry event ----
-  14: function(params, M, computed) {
-    const T_max = 30;
-    const t_entry = 10;
-    const sigma_star = computed.sigmaStar;
-    const tau_M = computed.tauM;
-    const sS_pre = Math.max(0, 1 - M.R(tau_M));
-    const ts = [], sSs = [];
-    for (let t = 0; t <= T_max; t++) {
-      if (t < t_entry) { ts.push(t); sSs.push(sS_pre); }
-      else {
-        const f = 1 - Math.pow(1 - params.lambda, t - t_entry + 1);
-        const Y_t = computed.Y_static * f;
-        const tau_t = M.tauAtFootprint(Y_t, sigma_star);
-        if (tau_t !== null && Number.isFinite(tau_t)) {
-          const sA_t = M.sA(sigma_star, tau_t);
-          const R_t  = M.R(tau_t);
-          ts.push(t); sSs.push(Math.max(0, 1 - sA_t - R_t));
-        }
-      }
-    }
-    Plotly.react("plot-pred-14", [
-      { x: ts, y: sSs, name: "s<sub>S</sub>(t)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4, shape: "hv" },
-        fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.10)" }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Period  t"),
-      yaxis: yStyle("Fringe share  s<sub>S</sub>"),
-      shapes: [
-        { type: "line", x0: t_entry, x1: t_entry, y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.maroon, width: 1.4, dash: "dot" } }
-      ],
-      annotations: [
-        { x: t_entry, y: 1.04, yref: "paper",
-          text: "Platform enters this category",
-          showarrow: false, font: { size: 11, color: COL.maroon } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 15: stylized I*(tau) ----
-  15: function(params, M, computed) {
-    const r = 2, theta = 0.5;
-    const taus = [], Is = [];
-    for (let t = 0.01; t <= 0.70; t += 0.01) {
-      const arg = r * theta * (1 - t);
-      if (arg > 0) { taus.push(t); Is.push(Math.log(Math.max(1e-6, arg)) / r); }
-    }
-    Plotly.react("plot-pred-15", [
-      { x: taus, y: Is, name: "I*(τ)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 },
-        fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.10)" }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Referral fee  τ"),
-      yaxis: yStyle("Innovation effort  I*"),
-      annotations: [
-        { x: 0.98, y: 0.95, xref: "paper", yref: "paper", xanchor: "right",
-          text: "ρ(I) = 1 − e<sup>−rI</sup>,  π<sub>S</sub><sup>inn</sup>(τ) = 1 − τ,  r = 2, θ = 0.5",
-          showarrow: false, font: { size: 10, color: COL.slate } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 16: sigma*(tau-bar) and tau*(sigma-bar) ----
-  16: function(params, M, computed) {
-    const tauStar = computed.tauStar;
-    const sigmaStar = computed.sigmaStar;
-    const tauCaps = [], sigmaResp = [];
-    for (let tc = 0.05; tc <= 0.70; tc += 0.01) {
-      tauCaps.push(tc);
-      sigmaResp.push(tc >= tauStar ? sigmaStar : M.sigmaOfTau(tc));
-    }
-    const sigmaCaps = [], tauResp = [];
-    const sigmaMax = Math.max(0.6, sigmaStar + 0.2);
-    for (let sc = 0; sc <= sigmaMax; sc += 0.02) {
-      sigmaCaps.push(sc);
-      tauResp.push(sc >= sigmaStar ? tauStar : M.bTauOfSigma(sc));
-    }
-    Plotly.react("plot-pred-16", [
-      { x: tauCaps, y: sigmaResp, name: "σ at the cap",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 },
-        xaxis: "x", yaxis: "y" },
-      { x: sigmaCaps, y: tauResp, name: "τ at the cap",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 },
-        xaxis: "x2", yaxis: "y2" }
-    ], {
-      margin: { l: 56, r: 56, t: 40, b: 56 },
-      height: 380,
-      font: { family: FONT_FAMILY, size: 11 },
-      plot_bgcolor: "#fff", paper_bgcolor: "#fff",
-      grid: { rows: 1, columns: 2, pattern: "independent" },
-      xaxis:  Object.assign(xStyle("Fee cap  τ̄"),  { domain: [0, 0.45] }),
-      yaxis:  yStyle("Equilibrium σ"),
-      xaxis2: Object.assign(xStyle("σ cap  σ̄"),     { domain: [0.55, 1.0] }),
-      yaxis2: Object.assign(yStyle("Equilibrium τ"), { anchor: "x2" }),
-      showlegend: false,
-      annotations: [
-        { x: 0.225, y: 1.06, xref: "paper", yref: "paper",
-          text: "Capping τ → lower σ", showarrow: false,
-          font: { size: 11, color: COL.navy } },
-        { x: 0.775, y: 1.06, xref: "paper", yref: "paper",
-          text: "Capping σ → lower τ", showarrow: false,
-          font: { size: 11, color: COL.maroon } }
-      ]
-    }, PLOT_CFG);
-  },
-
-  // ---- 17: stacked welfare-loss components ----
-  17: function(params, M, computed) {
-    if (computed.W_M === null || computed.W_0 === null || computed.W_SS === null) {
-      Plotly.react("plot-pred-17", [], baseLayout(), PLOT_CFG); return;
-    }
-    const tilt    = M.Theta * (computed.W_M - computed.W_0);
-    const ratchet = M.Theta * (computed.W_0 - computed.W_SS);
-    Plotly.react("plot-pred-17", [
-      { x: ["Long-run welfare loss"], y: [tilt],
-        name: "Starting tilt  Θ·(W(τ<sup>M</sup>) − W(τ<sup>0</sup>))",
-        type: "bar",
-        marker: { color: "rgba(31, 78, 121, 0.70)", line: { color: "#fff", width: 1.5 } },
-        text: [tilt.toFixed(5)], textposition: "inside", width: 0.5 },
-      { x: ["Long-run welfare loss"], y: [ratchet],
-        name: "Transitional ratchet  Θ·(W(τ<sup>0</sup>) − W(τ<sub>ss</sub>))",
-        type: "bar",
-        marker: { color: "rgba(138, 21, 56, 0.70)", line: { color: "#fff", width: 1.5 } },
-        text: [ratchet.toFixed(5)], textposition: "inside", width: 0.5 }
-    ], Object.assign(baseLayout(), {
-      xaxis: { showline: false, showgrid: false, zeroline: false,
-               tickfont: { size: 11, color: "#1f2937" }, automargin: true },
-      yaxis: yStyle("Discounted welfare loss"),
-      barmode: "stack", bargap: 0.5
-    }), PLOT_CFG);
-  },
-
-  // ---- 18: Y_ss(delta), Y_ss(K), Y_t under three lambdas ----
-  18: function(params, M, computed) {
-    const deltas = [], Y_ss_delta = [];
-    for (let d = 0.55; d <= 0.995; d += 0.01) {
-      const p2 = Object.assign({}, params, { delta: d });
-      const M2 = makeModel(p2);
-      const ts = M2.findTauStar();
-      if (ts === null) continue;
-      const sig = M2.sigmaOfTau(ts);
-      const sA_v = M2.sA(sig, ts);
-      const m_v = sA_v - M2.psi(sig);
-      if (m_v <= 0) continue;
-      Y_ss_delta.push(M2.YeFromTheta(M2.thetaE(m_v)));
-      deltas.push(d);
-    }
-    const Ks = [], Y_ss_K = [];
-    for (let k = 0.15; k <= 3.0; k += 0.05) {
-      const p2 = Object.assign({}, params, { K: k });
-      const M2 = makeModel(p2);
-      const ts = M2.findTauStar();
-      if (ts === null) continue;
-      const sig = M2.sigmaOfTau(ts);
-      const sA_v = M2.sA(sig, ts);
-      const m_v = sA_v - M2.psi(sig);
-      if (m_v <= 0) continue;
-      Y_ss_K.push(M2.YeFromTheta(M2.thetaE(m_v)));
-      Ks.push(k);
-    }
-    const T_max = 30;
-    const lambdaValues = [0.2, 0.5, 0.9];
-    const lambdaSeries = lambdaValues.map(lam => {
-      const ts_arr = [], Ys = [];
-      for (let t = 0; t <= T_max; t++) {
-        const f = 1 - Math.pow(1 - lam, t);
-        ts_arr.push(t); Ys.push(computed.Y_static * f);
-      }
-      return { ts: ts_arr, Ys, lam };
-    });
-    Plotly.react("plot-pred-18", [
-      { x: deltas, y: Y_ss_delta, name: "Y<sub>ss</sub>(δ)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.navy, width: 2.4 },
-        xaxis: "x", yaxis: "y" },
-      { x: Ks, y: Y_ss_K, name: "Y<sub>ss</sub>(K)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.maroon, width: 2.4 },
-        xaxis: "x2", yaxis: "y2" },
-      ...lambdaSeries.map((s, i) => ({
-        x: s.ts, y: s.Ys, name: "λ = " + s.lam.toFixed(1),
-        type: "scatter", mode: "lines",
-        line: { color: [COL.forest, COL.gold, COL.slate][i],
-                width: 2.0, shape: "spline", smoothing: 0.5 },
-        xaxis: "x3", yaxis: "y3"
-      }))
-    ], {
-      margin: { l: 50, r: 16, t: 36, b: 80 },
-      height: 380,
-      font: { family: FONT_FAMILY, size: 10 },
-      plot_bgcolor: "#fff", paper_bgcolor: "#fff",
-      grid: { rows: 1, columns: 3, pattern: "independent" },
-      xaxis:  Object.assign(xStyle("δ"),         { domain: [0.00, 0.30] }),
-      yaxis:  yStyle("Y<sub>ss</sub>"),
-      xaxis2: Object.assign(xStyle("K"),         { domain: [0.36, 0.66] }),
-      yaxis2: Object.assign(yStyle(""), { anchor: "x2" }),
-      xaxis3: Object.assign(xStyle("Period  t"), { domain: [0.72, 1.0] }),
-      yaxis3: Object.assign(yStyle(""), { anchor: "x3" }),
-      legend: { orientation: "h", y: -0.30, x: 0.85, xanchor: "right", font: { size: 9 } },
-      showlegend: true,
-      annotations: [
-        { text: "Y<sub>ss</sub> rises in δ",  x: 0.15, y: 1.06, xref: "paper", yref: "paper", showarrow: false, font: { size: 10, color: COL.navy } },
-        { text: "Y<sub>ss</sub> falls in K",  x: 0.51, y: 1.06, xref: "paper", yref: "paper", showarrow: false, font: { size: 10, color: COL.maroon } },
-        { text: "λ alters transition only",   x: 0.86, y: 1.06, xref: "paper", yref: "paper", showarrow: false, font: { size: 10, color: COL.slate } }
-      ]
-    }, PLOT_CFG);
-  },
-
-  // ---- 19: W(sigma | tau fixed) is flat ----
-  19: function(params, M, computed) {
-    const sigmas = [], W_fixed = [];
-    const sMax = Math.max(0.6, computed.sigmaStar + 0.2);
-    for (let s = 0; s <= sMax; s += 0.02) { sigmas.push(s); W_fixed.push(computed.W_star); }
-    Plotly.react("plot-pred-19", [
-      { x: sigmas, y: W_fixed, name: "W(σ | τ = τ* fixed)",
-        type: "scatter", mode: "lines",
-        line: { color: COL.forest, width: 2.4 } }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: xStyle("Self-preferencing  σ"),
-      yaxis: yStyle("Consumer welfare  W"),
-      annotations: [
-        { x: 0.5, y: 1.05, xref: "paper", yref: "paper",
-          text: "∂W/∂σ |<sub>τ fixed</sub> = 0",
-          showarrow: false, font: { size: 13, color: COL.forest } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 20: tau^W < tau* ----
-  20: function(params, M, computed) {
-    const taus = [], Ws = [], Pis = [];
-    for (let t = 0.05; t <= 0.85; t += 0.01) {
-      const sig = M.sigmaOfTau(t);
-      const sA_val = M.sA(sig, t);
-      const R_val  = M.R(t);
-      const P_val  = M.P(t);
-      const psi_val = M.psi(sig);
-      if (!Number.isFinite(sA_val) || sA_val > 0.999) continue;
-      taus.push(t);
-      Ws.push(M.W(t));
-      Pis.push(sA_val + P_val * (1 - sA_val - R_val) - psi_val);
-    }
-    let tauW = null, bestTS = -Infinity;
-    for (let i = 0; i < taus.length; i++) {
-      const ts = Ws[i] + Pis[i];
-      if (ts > bestTS) { bestTS = ts; tauW = taus[i]; }
-    }
-    const tauStarV = computed.tauStar;
-    Plotly.react("plot-pred-20", [
-      { x: taus, y: Ws, name: "W(τ)  consumer welfare",
-        type: "scatter", mode: "lines", yaxis: "y",
-        line: { color: COL.maroon, width: 2.4 } },
-      { x: taus, y: Pis, name: "Π̃(τ)  platform profit (σ best-response)",
-        type: "scatter", mode: "lines", yaxis: "y2",
-        line: { color: COL.navy, width: 2.4 } }
-    ], Object.assign(baseLayout(), {
-      xaxis: xStyle("Referral fee  τ"),
-      yaxis: Object.assign(yStyle("W(τ)"), { side: "left" }),
-      yaxis2: { title: { text: "Π̃(τ)", font: { size: 11, color: AXIS_INK }, standoff: 6 },
-                overlaying: "y", side: "right", showline: true, linecolor: AXIS_LINE,
-                showgrid: false, ticks: "outside", ticklen: 4, tickcolor: AXIS_LINE,
-                tickfont: { size: 10, color: "#6b7280" } },
-      shapes: [
-        { type: "rect", x0: tauW, x1: tauStarV, y0: 0, y1: 1, yref: "paper",
-          fillcolor: "rgba(138, 21, 56, 0.06)", line: { color: "rgba(0,0,0,0)" } },
-        { type: "line", x0: tauW, x1: tauW, y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.forest, width: 1.6, dash: "dash" } },
-        { type: "line", x0: tauStarV, x1: tauStarV, y0: 0, y1: 1, yref: "paper",
-          line: { color: COL.navy, width: 1.6, dash: "dot" } }
-      ],
-      annotations: [
-        { x: tauW, y: 1.05, yref: "paper",
-          text: "τ<sup>W</sup> = " + (tauW !== null ? tauW.toFixed(3) : "—"),
-          showarrow: false, font: { size: 11, color: COL.forest } },
-        { x: tauStarV, y: 1.10, yref: "paper",
-          text: "τ* = " + tauStarV.toFixed(3),
-          showarrow: false, font: { size: 11, color: COL.navy } },
-        { x: 0.5 * ((tauW || 0) + tauStarV), y: 0.55, yref: "paper",
-          text: "Deadweight loss<br>region",
-          showarrow: false, font: { size: 10, color: COL.maroon } }
-      ]
-    }), PLOT_CFG);
-  },
-
-  // ---- 21: welfare under four regulatory regimes ----
-  21: function(params, M, computed) {
-    const tauStar = computed.tauStar;
-    const tauM    = computed.tauM;
-    const tau_cap = 0.5 * (tauStar + tauM);
-    const W_LF       = computed.W_star;
-    const W_FC       = M.W(Math.min(tau_cap, tauStar));
-    const W_ND       = computed.W_M;
-    const W_combined = M.W(Math.min(tau_cap, tauM));
-    Plotly.react("plot-pred-21", [
-      { x: ["Laissez-faire", "Fee cap", "Non-discrimination", "Combined"],
-        y: [W_LF, W_FC, W_ND, W_combined],
-        type: "bar",
-        marker: { color: [COL.maroon, COL.navy, COL.gold, COL.forest],
-                  line: { color: "#fff", width: 1.5 } },
-        text: [W_LF, W_FC, W_ND, W_combined].map(w => w.toFixed(4)),
-        textposition: "outside", width: 0.55 }
-    ], Object.assign(baseLayout({showlegend: false}), {
-      xaxis: { showline: true, linecolor: AXIS_LINE,
-               tickfont: { size: 11, color: "#1f2937" }, automargin: true },
-      yaxis: yStyle("Consumer welfare  W"),
-      bargap: 0.4,
-      annotations: [
-        { x: 0.5, y: 1.07, xref: "paper", yref: "paper",
-          text: "Fee cap τ̄ = (τ* + τ<sup>M</sup>)/2; ND sets σ=0 → τ=τ<sup>M</sup>; combined imposes both",
-          showarrow: false, font: { size: 10, color: COL.slate } }
-      ]
-    }), PLOT_CFG);
-  }
-};
-
-// ============================================================================
-// Render: dashboard (the existing 7 plots + results table)
-// ============================================================================
-
-function renderDashboard(params, M, computed) {
-  const {
-    tauStar, sigmaStar, sA_star, R_star, sS_star, m_star, P_star, N_star,
-    ownProfit, feeRevenue, Pi_total, W_star,
-    tauM, W_M, theta_e_static, mu_static, Y_static,
-    tauSS, tau0, W_SS, W_0, welfareLoss
-  } = computed;
-
-  // ------- Full dynamic trajectory -------
-  const T_max = 30;
-  const traj_t = [], traj_mu = [], traj_Y = [], traj_tau = [],
-        traj_W = [], traj_Pi = [], traj_ownProf = [], traj_feeRev = [],
-        traj_N = [], traj_aggSA = [], traj_aggSS = [], traj_aggR = [],
-        traj_entryFlow = [], traj_cumLoss = [];
-  if (mu_static !== null && Y_static !== null) {
-    let cumLoss = 0;
-    let prev_Y = 0;
-    for (let t = 0; t <= T_max; t++) {
-      const f      = 1 - Math.pow(1 - params.lambda, t);
-      const f_next = 1 - Math.pow(1 - params.lambda, t + 1);
-      const Y_t_val  = Y_static * f;
-      const mu_t_val = mu_static * f;
-      const Y_next   = Y_static * f_next;
-      const tau_t = M.tauAtFootprint(Y_next, sigmaStar);
-      if (tau_t === null || !Number.isFinite(tau_t)) continue;
-
-      const sA_t = M.sA(sigmaStar, tau_t);
-      const R_t  = M.R(tau_t);
-      const sS_h = Math.max(0, 1 - sA_t - R_t);
-      const sS_p = Math.max(0, 1 - R_t);
-      const P_t  = M.P(tau_t);
-      const m_t  = sA_t - M.psi(sigmaStar);
-      const W_t_v = M.W(tau_t);
-
-      const ownProf_t = Y_t_val * m_t;
-      const feeRev_t  = M.Theta * P_t * (1 - R_t);
-      const Pi_t      = ownProf_t + feeRev_t;
-      if (W_M !== null) cumLoss += Math.pow(params.delta, t) * M.Theta * (W_M - W_t_v);
-
-      const Ne_h = (1 - tau_t) * sS_h / params.F;
-      const Np_p = (1 - tau_t) * sS_p / params.F;
-      const N_t_val = Y_t_val * Ne_h + (M.Theta - Y_t_val) * Np_p;
-
-      const aggSA = Y_t_val * sA_t / M.Theta;
-      const aggSS = (Y_t_val * sS_h + (M.Theta - Y_t_val) * sS_p) / M.Theta;
-      const aggR  = R_t;
-
-      const dY = Y_t_val - prev_Y;
-      prev_Y = Y_t_val;
-
-      traj_t.push(t); traj_mu.push(mu_t_val); traj_Y.push(Y_t_val);
-      traj_tau.push(tau_t); traj_W.push(W_t_v); traj_Pi.push(Pi_t);
-      traj_ownProf.push(ownProf_t); traj_feeRev.push(feeRev_t);
-      traj_N.push(N_t_val); traj_aggSA.push(aggSA); traj_aggSS.push(aggSS);
-      traj_aggR.push(aggR); traj_entryFlow.push(dY); traj_cumLoss.push(cumLoss);
-    }
-  }
-
-  // ------- Results table -------
-  const rows = [
-    { section: "Static optimum" },
-    { label: "$\\sigma^*$",                            val: fmt(sigmaStar) },
-    { label: "$s_A$",                                  val: fmt(sA_star), highlight: true },
-    { label: "$s_S$",                                  val: fmt(sS_star), highlight: true },
-    { label: "$s_0$",                                  val: fmt(R_star),  highlight: true },
-    { label: "$N$ (fringe sellers)",                   val: fmt(N_star) },
-    { label: "$m = s_A - \\psi(\\sigma^*)$",           val: fmt(m_star) },
-    { section: "Profit decomposition" },
-    { label: "Own-product profit",                     val: fmt(ownProfit) },
-    { label: "Fee revenue",                            val: fmt(feeRevenue) },
-    { label: "Total $\\Pi^*$",                         val: fmt(Pi_total) },
-    { label: "Own-product share of profit",            val: fmt(ownProfit / Pi_total, 3) },
-    { section: "Welfare" },
-    { label: "$W(\\tau^*)$",                           val: fmt(W_star) },
-    { label: "$W(\\tau^M)$",                           val: fmt(W_M) },
-    { section: "Dynamic steady state" },
-    { label: "$\\theta^e$",                            val: fmt(theta_e_static) },
-    { label: "$\\mu_{ss}$",                            val: fmt(mu_static, 4) },
-    { label: "$Y_{ss}$",                               val: fmt(Y_static, 4) },
-    { section: "Long-run welfare loss" },
-    { label: "$W(\\tau^M) - W(\\tau_{ss})$",           val: fmt((W_M !== null && W_SS !== null) ? W_M - W_SS : null, 6) },
-    { label: "$\\Delta\\mathcal{W}_{ss}$",             val: fmt(welfareLoss, 6), highlight: true },
-    { section: "Fee benchmarks" },
-    { label: "$\\tau^M$ (pure marketplace)",           val: fmt(tauM,    6) },
-    { label: "$\\tau^0$ (period-zero dynamic)",        val: fmt(tau0,    6) },
-    { label: "$\\tau_{ss}$ (steady-state dynamic)",    val: fmt(tauSS,   6), highlight: true },
-    { label: "$\\tau^*$ (one-shot static joint)",      val: fmt(tauStar, 6) }
   ];
-  const tbl = document.getElementById("results-table");
-  if (tbl) {
-    tbl.innerHTML = "";
-    rows.forEach(r => {
-      const tr = document.createElement("tr");
-      if (r.section) {
-        tr.classList.add("section-row");
-        const td = document.createElement("td"); td.colSpan = 2; td.textContent = r.section; tr.appendChild(td);
-      } else {
-        if (r.highlight) tr.classList.add("highlight");
-        const th = document.createElement("th"); th.innerHTML = r.label;
-        const td = document.createElement("td"); td.textContent = r.val;
-        tr.appendChild(th); tr.appendChild(td);
-      }
-      tbl.appendChild(tr);
-    });
-    if (window.renderMathInElement) {
-      renderMathInElement(tbl, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
-    }
-  }
 
-  // ------- Plots -------
-  const L = (yT, opts) => {
-    return Object.assign({}, baseLayout(opts), {
-      xaxis: xStyle("Period  t"),
-      yaxis: yStyle(yT)
-    });
-  };
-
-  Plotly.react("plot-transition", [
-    { x: traj_t, y: traj_mu, name: "μ<sub>t</sub>  fraction of categories entered",
-      type: "scatter", mode: "lines",
-      line: { color: COL.navy, width: 2.4, shape: "spline", smoothing: 0.6 } },
-    { x: traj_t, y: traj_Y, name: "Y<sub>t</sub>  size-weighted footprint",
-      type: "scatter", mode: "lines",
-      line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.6 } }
-  ], Object.assign(L("State variables"), { yaxis: Object.assign(yStyle("State variables"), { range: [0, 1] }) }), PLOT_CFG);
-
-  Plotly.react("plot-profit", [
-    { x: traj_t, y: traj_feeRev, name: "Fee revenue   Θ · π<sup>M</sup>(τ<sub>t</sub>)",
-      type: "scatter", mode: "lines", stackgroup: "p",
-      fillcolor: "rgba(31, 78, 121, 0.30)",
-      line: { color: COL.navy, width: 1.8, shape: "spline", smoothing: 0.5 } },
-    { x: traj_t, y: traj_ownProf, name: "Own-product profit   Y<sub>t</sub> · m(τ<sub>t</sub>)",
-      type: "scatter", mode: "lines", stackgroup: "p",
-      fillcolor: "rgba(138, 21, 56, 0.30)",
-      line: { color: COL.maroon, width: 1.8, shape: "spline", smoothing: 0.5 } }
-  ], L("Π<sub>t</sub>   platform profit per period"), PLOT_CFG);
-
-  const welfareTraces = [
-    { x: traj_t, y: traj_W, name: "W(τ<sub>t</sub>)   along the transition",
-      type: "scatter", mode: "lines",
-      line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.6 } }
-  ];
-  if (W_M !== null) {
-    welfareTraces.push({
-      x: traj_t, y: traj_t.map(() => W_M),
-      name: "W(τ<sup>M</sup>)   pure-marketplace benchmark",
-      type: "scatter", mode: "lines",
-      line: { color: COL.forest, width: 1.6, dash: "dash" }
-    });
-  }
-  Plotly.react("plot-welfare", welfareTraces, L("W = ln D"), PLOT_CFG);
-
-  Plotly.react("plot-sellers", [
-    { x: traj_t, y: traj_N, name: "Aggregate fringe-seller mass N<sub>t</sub>",
-      type: "scatter", mode: "lines",
-      line: { color: COL.navy, width: 2.4, shape: "spline", smoothing: 0.6 },
-      fill: "tozeroy", fillcolor: "rgba(31, 78, 121, 0.08)" }
-  ], Object.assign(L("N<sub>t</sub>"), { showlegend: false }), PLOT_CFG);
-
-  Plotly.react("plot-shares", [
-    { x: traj_t, y: traj_aggSA, name: "Amazon  s<sub>A</sub>",
-      type: "scatter", mode: "lines", stackgroup: "s",
-      fillcolor: "rgba(138, 21, 56, 0.40)",
-      line: { color: COL.maroon, width: 1.6, shape: "spline", smoothing: 0.5 } },
-    { x: traj_t, y: traj_aggSS, name: "Fringe  s<sub>S</sub>",
-      type: "scatter", mode: "lines", stackgroup: "s",
-      fillcolor: "rgba(31, 78, 121, 0.35)",
-      line: { color: COL.navy, width: 1.6, shape: "spline", smoothing: 0.5 } },
-    { x: traj_t, y: traj_aggR, name: "Outside  R",
-      type: "scatter", mode: "lines", stackgroup: "s",
-      fillcolor: "rgba(74, 85, 104, 0.30)",
-      line: { color: COL.slate, width: 1.6, shape: "spline", smoothing: 0.5 } }
-  ], Object.assign(L("Share"), { yaxis: Object.assign(yStyle("Share"), { range: [0, 1] }) }), PLOT_CFG);
-
-  Plotly.react("plot-entry-flow", [
-    { x: traj_t, y: traj_entryFlow, name: "ΔY<sub>t</sub>",
-      type: "bar",
-      marker: { color: COL.navy, line: { color: "#ffffff", width: 0.5 } },
-      width: 0.7 }
-  ], Object.assign(L("ΔY<sub>t</sub>   new category mass entered"), { showlegend: false, bargap: 0.25 }), PLOT_CFG);
-
-  Plotly.react("plot-cumloss", [
-    { x: traj_t, y: traj_cumLoss, name: "cumulative discounted loss",
-      type: "scatter", mode: "lines",
-      line: { color: COL.maroon, width: 2.4, shape: "spline", smoothing: 0.6 },
-      fill: "tozeroy", fillcolor: "rgba(138, 21, 56, 0.10)" }
-  ], Object.assign(L("Σ<sub>s≤t</sub> δ<sup>s</sup> · Θ · [W(τ<sup>M</sup>) − W(τ<sub>s</sub>)]"), { showlegend: false }), PLOT_CFG);
+  Plotly.react("plot1", traces, {
+    margin: { l: 60, r: 30, t: 30, b: 60 },
+    xaxis: { title: "Self-preferencing sigma", range: [0, 0.4] },
+    yaxis: { title: "Commission fee tau", range: [0, 0.55] },
+    showlegend: true, legend: { orientation: "h", y: -0.2 }
+  }, { responsive: true, displayModeBar: false });
 }
 
-// ============================================================================
-// Main update: read params, solve model, render whichever view is active
-// ============================================================================
+function drawFig2(p) {
+  const sig_grid = linspace(0.01, 0.40, 60);
+  const tau_grid = linspace(0.05, 0.55, 60);
+  const z = tau_grid.map(t => sig_grid.map(s => Pi_fn(s, t, p)));
+  const eq = joint_eq(p);
 
-function update() {
-  // Update slider label texts
-  PARAMS.forEach(k => {
-    const v = parseFloat(document.getElementById(k).value);
-    const labelEl = document.getElementById(k + "-val");
-    if (k === 'F' || k === 'alpha') labelEl.textContent = v.toFixed(5);
-    else if (k === 'lambda' || k === 'delta' || k === 'K') labelEl.textContent = v.toFixed(2);
-    else labelEl.textContent = v.toFixed(2);
+  const traces = [
+    {
+      x: sig_grid, y: tau_grid, z: z,
+      type: "heatmap", colorscale: "Viridis", showscale: true,
+      colorbar: { title: "Pi" }
+    },
+    {
+      type: "contour", x: sig_grid, y: tau_grid, z: z,
+      contours: { coloring: "none" },
+      line: { color: "white", width: 1 }, showscale: false
+    },
+    {
+      x: [eq.sigma], y: [eq.tau], mode: "markers", showlegend: false,
+      marker: { color: "#b91c1c", size: 14, symbol: "circle" },
+      type: "scatter"
+    }
+  ];
+
+  Plotly.react("plot2", traces, {
+    margin: { l: 60, r: 60, t: 30, b: 60 },
+    xaxis: { title: "sigma", range: [0, 0.4] },
+    yaxis: { title: "tau", range: [0.05, 0.55] }
+  }, { responsive: true, displayModeBar: false });
+}
+
+function drawFig3(p) {
+  const sig_grid = linspace(0.01, 0.45, 80);
+  const eq = joint_eq(p);
+  const direct = sig_grid.map(_ => W_fn(eq.tau, p));
+  const indirect = sig_grid.map(s => {
+    const t = br_tau(s, p);
+    if (isNaN(t)) return NaN;
+    return W_fn(t, p);
   });
 
-  const params = getParams();
-  const M = makeModel(params);
+  const traces = [
+    {
+      x: sig_grid, y: direct,
+      mode: "lines", name: "Direct: W with tau fixed at tau*",
+      line: { color: "#012169", width: 3 },
+      xaxis: "x", yaxis: "y"
+    },
+    {
+      x: sig_grid, y: indirect,
+      mode: "lines", name: "Indirect: W(b_tau(sigma))",
+      line: { color: "#b91c1c", width: 3 },
+      xaxis: "x2", yaxis: "y2"
+    }
+  ];
 
-  const tauStar = M.findTauStar();
-  const tauM    = M.findTauM();
-
-  if (tauStar === null) {
-    showWarning("No interior static optimum found. Try moving parameters back toward the defaults.");
-    return;
-  }
-  clearWarning();
-
-  const sigmaStar = M.sigmaOfTau(tauStar);
-  const sA_star   = M.sA(sigmaStar, tauStar);
-  const R_star    = M.R(tauStar);
-  const sS_star   = 1 - sA_star - R_star;
-  const psi_star  = M.psi(sigmaStar);
-  const m_star    = sA_star - psi_star;
-  const P_star    = M.P(tauStar);
-  const N_star    = (1 - tauStar) * sS_star / params.F;
-
-  const ownProfit  = (1 + P_star) * sA_star - psi_star;
-  const feeRevenue = P_star * sS_star;
-  const Pi_total   = ownProfit + feeRevenue;
-
-  const W_star = M.W(tauStar);
-  const W_M    = (tauM !== null) ? M.W(tauM) : null;
-
-  const theta_e_static = (m_star > 0) ? M.thetaE(m_star) : null;
-  const mu_static      = (theta_e_static !== null) ? M.muFromTheta(theta_e_static) : null;
-  const Y_static       = (theta_e_static !== null) ? M.YeFromTheta(theta_e_static) : null;
-
-  const tauSS = M.findTauSS(sigmaStar);
-  const tau0  = M.findTauZero(sigmaStar);
-  const W_SS  = (tauSS !== null) ? M.W(tauSS) : null;
-  const W_0   = (tau0  !== null) ? M.W(tau0)  : null;
-  const welfareLoss = (W_M !== null && W_SS !== null) ? M.Theta * (W_M - W_SS) : null;
-
-  const computed = {
-    tauStar, sigmaStar, sA_star, R_star, sS_star, m_star, P_star, N_star,
-    ownProfit, feeRevenue, Pi_total, W_star,
-    tauM, W_M, theta_e_static, mu_static, Y_static,
-    tauSS, tau0, W_SS, W_0, welfareLoss
-  };
-
-  // Route-dependent rendering
-  const route = currentRoute();
-  if (route === 'home') {
-    renderHome();
-  } else if (route === 'dashboard') {
-    renderDashboard(params, M, computed);
-  } else if (route.startsWith('pred-')) {
-    const n = parseInt(route.slice(5), 10);
-    renderPrediction(n, params, M, computed);
-  }
+  Plotly.react("plot3", traces, {
+    margin: { l: 60, r: 30, t: 30, b: 60 },
+    grid: { rows: 2, columns: 1, pattern: "independent" },
+    xaxis: { title: "", range: [0, 0.45] },
+    yaxis: { title: "W (direct)" },
+    xaxis2: { title: "sigma", range: [0, 0.45] },
+    yaxis2: { title: "W (indirect)" },
+    showlegend: true, legend: { orientation: "h", y: -0.2 }
+  }, { responsive: true, displayModeBar: false });
 }
 
-// ============================================================================
-// Wire up
-// ============================================================================
+function drawFig4(p) {
+  const tau_grid = linspace(0.005, 0.45, 120);
+  const tsv = tau_grid.map(t => {
+    const s = br_sigma(t, p);
+    if (isNaN(s) || s < 0 || s > 0.5) return NaN;
+    return W_fn(t, p) + Pi_fn(s, t, p);
+  });
+  const eq = joint_eq(p);
+  const tauW = tau_W_solve(p);
+  const tsAtStar = W_fn(eq.tau, p) + Pi_fn(eq.sigma, eq.tau, p);
+  const valid = tsv.filter(v => !isNaN(v));
+  const tsMax = Math.max(...valid);
+  const tsMin = Math.min(...valid);
 
-PARAMS.forEach(k => {
-  document.getElementById(k).addEventListener("input", update);
-});
+  const traces = [
+    {
+      x: tau_grid, y: tsv,
+      mode: "lines", name: "Total surplus",
+      line: { color: "#012169", width: 3 }
+    },
+    {
+      x: [tauW, tauW], y: [tsMin, tsMax],
+      mode: "lines", name: "tau^W",
+      line: { color: "#15803d", width: 2, dash: "dash" }
+    },
+    {
+      x: [eq.tau, eq.tau], y: [tsMin, tsMax],
+      mode: "lines", name: "tau*",
+      line: { color: "#b91c1c", width: 2, dash: "dash" }
+    }
+  ];
 
-document.addEventListener("DOMContentLoaded", () => {
-  navigateToRoute();
+  Plotly.react("plot4", traces, {
+    margin: { l: 60, r: 30, t: 30, b: 60 },
+    xaxis: { title: "Commission fee tau", range: [0, 0.45] },
+    yaxis: { title: "Total surplus" },
+    showlegend: true, legend: { orientation: "h", y: -0.2 }
+  }, { responsive: true, displayModeBar: false });
+}
+
+function drawFig5(p) {
+  const T = 40;
+  const eq = joint_eq(p);
+  const Yss = Y_ss(eq.sigma, eq.tau, p);
+  const lambdas = [0.10, 0.20, 0.50, 0.80];
+  const traces = lambdas.map(L => {
+    const pL = { ...p, lambda: L };
+    const y = Y_path(T, eq.sigma, eq.tau, pL);
+    return {
+      x: Array.from({ length: T + 1 }, (_, t) => t),
+      y: y,
+      mode: "lines+markers", name: "lambda = " + L.toFixed(2),
+      line: { width: 2 }
+    };
+  });
+  traces.push({
+    x: [0, T], y: [Yss, Yss],
+    mode: "lines", name: "Y_ss",
+    line: { color: "#525252", width: 1, dash: "dash" }
+  });
+
+  Plotly.react("plot5", traces, {
+    margin: { l: 60, r: 30, t: 30, b: 60 },
+    xaxis: { title: "Period t" },
+    yaxis: { title: "Y_t", range: [0, null] },
+    showlegend: true, legend: { orientation: "h", y: -0.2 }
+  }, { responsive: true, displayModeBar: false });
+}
+
+function drawFig6(p) {
+  const eq = joint_eq(p);
+  const delta_grid = linspace(0.80, 0.995, 30);
+  const Yss_delta = delta_grid.map(d => Y_ss(eq.sigma, eq.tau, { ...p, delta: d }));
+  const K_grid = linspace(0.4, 2.5, 30);
+  const Yss_K = K_grid.map(k => Y_ss(eq.sigma, eq.tau, { ...p, K: k }));
+
+  const traces = [
+    {
+      x: delta_grid, y: Yss_delta,
+      mode: "lines", name: "Y_ss vs delta",
+      line: { color: "#012169", width: 3 },
+      xaxis: "x", yaxis: "y"
+    },
+    {
+      x: K_grid, y: Yss_K,
+      mode: "lines", name: "Y_ss vs K",
+      line: { color: "#f2a900", width: 3 },
+      xaxis: "x2", yaxis: "y2"
+    }
+  ];
+
+  Plotly.react("plot6", traces, {
+    margin: { l: 60, r: 30, t: 30, b: 60 },
+    grid: { rows: 1, columns: 2, pattern: "independent" },
+    xaxis: { title: "delta" }, yaxis: { title: "Y_ss" },
+    xaxis2: { title: "K" }, yaxis2: { title: "Y_ss" },
+    showlegend: false
+  }, { responsive: true, displayModeBar: false });
+}
+
+function drawFig7(p, tauBar) {
+  const tau_grid = linspace(0.05, 0.55, 80);
+  const sig_grid = linspace(0.01, 0.40, 80);
+  const br_s_pts = tau_grid.map(t => ({ tau: t, sigma: br_sigma(t, p) }))
+                           .filter(d => d.sigma > 0 && d.sigma < 0.5);
+  const br_t_pts = sig_grid.map(s => ({ sigma: s, tau: br_tau(s, p) }))
+                           .filter(d => !isNaN(d.tau) && d.tau > 0 && d.tau < 0.7);
+  const eq = joint_eq(p);
+  const tauND = br_tau(0, p);
+  const sigmaFC = br_sigma(tauBar, p);
+
+  const traces = [
+    {
+      x: br_t_pts.map(d => d.sigma), y: br_t_pts.map(d => d.tau),
+      mode: "lines", name: "b_tau(sigma)",
+      line: { color: "#012169", width: 3 }
+    },
+    {
+      x: br_s_pts.map(d => d.sigma), y: br_s_pts.map(d => d.tau),
+      mode: "lines", name: "b_sigma(tau)",
+      line: { color: "#f2a900", width: 3 }
+    },
+    {
+      x: [0, 0.4], y: [tauBar, tauBar],
+      mode: "lines", name: "Fee cap",
+      line: { color: "#b91c1c", width: 2, dash: "dash" }
+    },
+    {
+      x: [0, 0], y: [0, 0.55],
+      mode: "lines", name: "Non-discrimination",
+      line: { color: "#15803d", width: 2, dash: "dash" }
+    },
+    {
+      x: [eq.sigma], y: [eq.tau],
+      mode: "markers", name: "Unrestricted",
+      marker: { color: "#012169", size: 12 }
+    },
+    {
+      x: [sigmaFC], y: [tauBar],
+      mode: "markers", name: "Fee cap eq.",
+      marker: { color: "#b91c1c", size: 12, symbol: "triangle-up" }
+    },
+    {
+      x: [0], y: [tauND],
+      mode: "markers", name: "Non-discrim eq.",
+      marker: { color: "#15803d", size: 12, symbol: "square" }
+    }
+  ];
+
+  Plotly.react("plot7", traces, {
+    margin: { l: 60, r: 30, t: 30, b: 60 },
+    xaxis: { title: "Self-preferencing sigma", range: [-0.01, 0.4] },
+    yaxis: { title: "Commission fee tau", range: [0, 0.55] },
+    showlegend: true, legend: { orientation: "h", y: -0.25 }
+  }, { responsive: true, displayModeBar: false });
+}
+
+function drawFig8(p) {
+  const eq = joint_eq(p);
+  const tauBars  = linspace(0.05, eq.tau, 40);
+  const sigCaps  = linspace(0, eq.sigma, 40);
+  const z = sigCaps.map(_ => tauBars.map(tb => W_fn(tb, p)));
+
+  const traces = [
+    {
+      x: tauBars, y: sigCaps, z: z,
+      type: "heatmap", colorscale: "Viridis",
+      colorbar: { title: "W" }
+    },
+    {
+      type: "contour", x: tauBars, y: sigCaps, z: z,
+      contours: { coloring: "none" },
+      line: { color: "white", width: 1 }, showscale: false
+    },
+    {
+      x: [eq.tau], y: [0], mode: "markers", name: "ND only",
+      marker: { color: "#15803d", size: 12, symbol: "square" }
+    },
+    {
+      x: [0.20], y: [eq.sigma], mode: "markers", name: "Fee cap only",
+      marker: { color: "#b91c1c", size: 12, symbol: "triangle-up" }
+    },
+    {
+      x: [0.20], y: [0], mode: "markers", name: "Combined",
+      marker: { color: "#012169", size: 14 }
+    }
+  ];
+
+  Plotly.react("plot8", traces, {
+    margin: { l: 60, r: 60, t: 30, b: 60 },
+    xaxis: { title: "Fee cap tau-bar", range: [0.05, eq.tau + 0.005] },
+    yaxis: { title: "Self-preferencing cap", range: [-0.002, eq.sigma + 0.005] },
+    showlegend: true, legend: { orientation: "h", y: -0.2 }
+  }, { responsive: true, displayModeBar: false });
+}
+
+function drawFig9(p, sigmaFixed) {
+  const tau_grid = linspace(0.10, 0.50, 60);
+  const F_grid = linspace(0.10, 1.00, 60);
+  const Ngrid = F_grid.map(f => tau_grid.map(t => N_S(sigmaFixed, t, { ...p, F: f })));
+  const Wgrid = F_grid.map(f => tau_grid.map(t => W_fn(t, { ...p, F: f })));
+  const flatN = Ngrid.flat().filter(v => isFinite(v) && v > 0).sort((a, b) => a - b);
+  const Ntarget = flatN[Math.floor(flatN.length / 2)];
+
+  const traces = [
+    {
+      x: tau_grid, y: F_grid, z: Wgrid,
+      type: "heatmap", colorscale: "Viridis",
+      colorbar: { title: "W" }
+    },
+    {
+      type: "contour", x: tau_grid, y: F_grid, z: Wgrid,
+      contours: { coloring: "none" },
+      line: { color: "white", width: 1 }, showscale: false
+    },
+    {
+      type: "contour", x: tau_grid, y: F_grid, z: Ngrid,
+      contours: { coloring: "none",
+                  start: Ntarget, end: Ntarget, size: 0.001 },
+      line: { color: "#b91c1c", width: 3 }, showscale: false
+    }
+  ];
+
+  Plotly.react("plot9", traces, {
+    margin: { l: 60, r: 60, t: 30, b: 60 },
+    xaxis: { title: "tau", range: [0.10, 0.50] },
+    yaxis: { title: "F (3P fixed cost)", range: [0.10, 1.00] },
+    annotations: [{
+      text: "Red contour: iso-N at N ~ " + Ntarget.toFixed(2),
+      xref: "paper", yref: "paper", x: 0.5, y: -0.18,
+      showarrow: false, font: { color: "#b91c1c" }
+    }]
+  }, { responsive: true, displayModeBar: false });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  const staticKeys = ["v", "c", "F", "psi_a", "psi_b"];
+  const dynamicKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "K"];
+
+  makeControl(document.getElementById("ctrl1"), staticKeys, PARAMS, drawFig1);
+  makeControl(document.getElementById("ctrl2"), staticKeys, PARAMS, drawFig2);
+  makeControl(document.getElementById("ctrl3"), staticKeys, PARAMS, drawFig3);
+  makeControl(document.getElementById("ctrl4"), staticKeys, PARAMS, drawFig4);
+  makeControl(document.getElementById("ctrl5"), dynamicKeys, PARAMS, drawFig5);
+  makeControl(document.getElementById("ctrl6"), dynamicKeys, PARAMS, drawFig6);
+
+  (function () {
+    const ctrl = document.getElementById("ctrl7");
+    let localTauBar = 0.20;
+    let localP = { ...PARAMS };
+    function refresh() { drawFig7(localP, localTauBar); }
+    makeControl(ctrl, staticKeys, PARAMS, p => { localP = p; refresh(); });
+    const div = document.createElement("div");
+    div.className = "control";
+    div.innerHTML =
+      "<label>Fee cap tau-bar " +
+      "<span class=\"value\" id=\"val_tauBar\">0.200</span></label>" +
+      "<input type=\"range\" min=\"0.05\" max=\"0.5\" step=\"0.005\" " +
+      "value=\"0.20\" id=\"rng_tauBar\">";
+    ctrl.insertBefore(div, ctrl.firstChild);
+    div.querySelector("input").addEventListener("input", e => {
+      localTauBar = parseFloat(e.target.value);
+      document.getElementById("val_tauBar").textContent = localTauBar.toFixed(3);
+      refresh();
+    });
+    refresh();
+  })();
+
+  makeControl(document.getElementById("ctrl8"), staticKeys, PARAMS, drawFig8);
+
+  (function () {
+    const ctrl = document.getElementById("ctrl9");
+    let sigmaFixed = 0.20;
+    let localP = { ...PARAMS };
+    function refresh() { drawFig9(localP, sigmaFixed); }
+    makeControl(ctrl, ["v", "c", "psi_a", "psi_b"], PARAMS,
+                p => { localP = p; refresh(); });
+    const div = document.createElement("div");
+    div.className = "control";
+    div.innerHTML =
+      "<label>Fixed self-preferencing sigma " +
+      "<span class=\"value\" id=\"val_sigfix\">0.200</span></label>" +
+      "<input type=\"range\" min=\"0.0\" max=\"0.4\" step=\"0.01\" " +
+      "value=\"0.20\" id=\"rng_sigfix\">";
+    ctrl.insertBefore(div, ctrl.firstChild);
+    div.querySelector("input").addEventListener("input", e => {
+      sigmaFixed = parseFloat(e.target.value);
+      document.getElementById("val_sigfix").textContent = sigmaFixed.toFixed(3);
+      refresh();
+    });
+    refresh();
+  })();
 });
 </script>
 
