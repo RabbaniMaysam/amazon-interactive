@@ -704,20 +704,20 @@ function drawFig1(p) {
     },
     {
       x: [eq.sigma], y: [eq.tau],
-      mode: "markers", name: "Hybrid equilibrium (σ*, τ*)",
+      mode: "markers", name: "(σ*, τ*)",
       marker: { color: "#b91c1c", size: 12 }
     },
     {
       x: [0], y: [tauM],
-      mode: "markers", name: "Pure-marketplace τ<sup>M</sup>",
+      mode: "markers", name: "τ<sup>M</sup>",
       marker: { color: "#525252", size: 10, symbol: "triangle-up" }
     }
   ];
 
   Plotly.react("plot1", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Self-preferencing intensity σ", range: [0, 0.4] },
-    yaxis: { title: "Commission fee τ", range: [0, 0.55] },
+    xaxis: { title: "σ", range: [0, 0.4] },
+    yaxis: { title: "τ", range: [0, 0.55] },
     showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
 }
@@ -754,9 +754,9 @@ function drawFig2(p) {
   Plotly.react("plot2", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
-      xaxis: { title: "σ (self-preferencing)", range: [0, 0.4] },
-      yaxis: { title: "τ (fee)", range: [0.05, 0.55] },
-      zaxis: { title: "Profit Π" },
+      xaxis: { title: "σ", range: [0, 0.4] },
+      yaxis: { title: "τ", range: [0.05, 0.55] },
+      zaxis: { title: "Π" },
       camera: cam
     }
   }, { responsive: true, displayModeBar: false }).then(() => {
@@ -780,12 +780,12 @@ function drawFig3(p) {
   const traces = [
     {
       x: sig_grid, y: direct,
-      mode: "lines", name: "Direct: W(τ*)",
+      mode: "lines", name: "W(τ*)",
       line: { color: "#111", width: 2.5, dash: "dash" }
     },
     {
       x: sig_grid, y: indirect,
-      mode: "lines", name: "Indirect: W(b<sub>τ</sub>(σ))",
+      mode: "lines", name: "W(b<sub>τ</sub>(σ))",
       line: { color: "#111", width: 2.5 }
     },
     {
@@ -844,7 +844,7 @@ function drawFig4(p) {
     },
     {
       x: tau_grid, y: tsv,
-      mode: "lines", name: "Total surplus",
+      mode: "lines", name: "TS",
       line: { color: "#012169", width: 3 }
     },
     {
@@ -861,8 +861,8 @@ function drawFig4(p) {
 
   Plotly.react("plot4", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Commission fee τ", range: [0, 0.45] },
-    yaxis: { title: "Total surplus" },
+    xaxis: { title: "τ", range: [0, 0.45] },
+    yaxis: { title: "TS" },
     showlegend: true, legend: { orientation: "h", y: -0.2 },
     annotations: [{
       x: dwlMidX, y: dwlMidY,
@@ -886,7 +886,7 @@ function drawFig5(p) {
     {
       x: t_grid, y: y,
       mode: "lines+markers",
-      name: "Y<sub>t</sub> at λ = " + p.lambda.toFixed(2),
+      name: "Y<sub>t</sub> (λ = " + p.lambda.toFixed(2) + ")",
       line: { color: "#012169", width: 3 },
       marker: { size: 5 }
     },
@@ -899,7 +899,7 @@ function drawFig5(p) {
 
   Plotly.react("plot5", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Period t" },
+    xaxis: { title: "t" },
     yaxis: { title: "Y<sub>t</sub>", range: [0, null] },
     showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
@@ -934,8 +934,8 @@ function drawFig6(p) {
   Plotly.react("plot6", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
     grid: { rows: 1, columns: 2, pattern: "independent" },
-    xaxis: { title: "Discount factor δ" }, yaxis: { title: "Y<sub>ss</sub>" },
-    xaxis2: { title: "Entry cost K" }, yaxis2: { title: "Y<sub>ss</sub>" },
+    xaxis: { title: "δ" }, yaxis: { title: "Y<sub>ss</sub>" },
+    xaxis2: { title: "K" }, yaxis2: { title: "Y<sub>ss</sub>" },
     showlegend: false
   }, { responsive: true, displayModeBar: false });
 }
@@ -974,7 +974,7 @@ function drawFig7(p, tauBar) {
     {
       x: [0, 0.4, null, sigmaFC],
       y: [tauBar, tauBar, null, tauBar],
-      mode: "lines+markers", name: "Fee cap τ̄",
+      mode: "lines+markers", name: "τ̄",
       line: { color: "#b91c1c", width: 2, dash: "dash" },
       marker: {
         color: "#b91c1c", size: 12,
@@ -985,7 +985,7 @@ function drawFig7(p, tauBar) {
     {
       x: [0, 0, null, 0],
       y: [0, 0.55, null, tauND],
-      mode: "lines+markers", name: "Non-discrim (σ = 0)",
+      mode: "lines+markers", name: "σ = 0",
       line: { color: "#15803d", width: 2, dash: "dash" },
       marker: {
         color: "#15803d", size: 12,
@@ -995,15 +995,15 @@ function drawFig7(p, tauBar) {
     },
     {
       x: [eq.sigma], y: [eq.tau],
-      mode: "markers", name: "Unrestricted (σ*, τ*)",
+      mode: "markers", name: "(σ*, τ*)",
       marker: { color: "#012169", size: 12, symbol: "circle" }
     }
   ];
 
   Plotly.react("plot7", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Self-preferencing σ", range: [-0.01, 0.4] },
-    yaxis: { title: "Commission fee τ", range: [0, 0.55] },
+    xaxis: { title: "σ", range: [-0.01, 0.4] },
+    yaxis: { title: "τ", range: [0, 0.55] },
     showlegend: true, legend: { orientation: "h", y: -0.25 }
   }, { responsive: true, displayModeBar: false });
 }
@@ -1033,17 +1033,17 @@ function drawFig8(p) {
     },
     {
       x: [eq.tau], y: [0], z: [W_ND_only],
-      mode: "markers", type: "scatter3d", name: "Non-discrim only",
+      mode: "markers", type: "scatter3d", name: "σ = 0 only",
       marker: { color: "#15803d", size: 6, symbol: "square" }
     },
     {
       x: [0.20], y: [eq.sigma], z: [W_fee_cap_only],
-      mode: "markers", type: "scatter3d", name: "Fee cap only",
+      mode: "markers", type: "scatter3d", name: "τ̄ only",
       marker: { color: "#b91c1c", size: 6, symbol: "diamond" }
     },
     {
       x: [0.20], y: [0], z: [W_combined],
-      mode: "markers", type: "scatter3d", name: "Combined",
+      mode: "markers", type: "scatter3d", name: "(τ̄, σ = 0)",
       marker: { color: "#012169", size: 7, symbol: "circle" }
     }
   ];
@@ -1052,9 +1052,9 @@ function drawFig8(p) {
   Plotly.react("plot8", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
-      xaxis: { title: "Fee cap τ̄", range: [0.05, eq.tau + 0.005] },
-      yaxis: { title: "Self-preferencing cap σ_cap", range: [0, eq.sigma + 0.005] },
-      zaxis: { title: "Consumer welfare W" },
+      xaxis: { title: "τ̄", range: [0.05, eq.tau + 0.005] },
+      yaxis: { title: "σ<sub>cap</sub>", range: [0, eq.sigma + 0.005] },
+      zaxis: { title: "W" },
       camera: cam8
     },
     showlegend: true, legend: { orientation: "h", y: 0 }
@@ -1092,8 +1092,8 @@ function drawFig9(p, sigmaFixed) {
 
   Plotly.react("plot9", traces, {
     margin: { l: 60, r: 60, t: 30, b: 60 },
-    xaxis: { title: "Commission fee τ", range: [0.10, 0.50] },
-    yaxis: { title: "3P fixed cost F", range: [0.10, 1.00] },
+    xaxis: { title: "τ", range: [0.10, 0.50] },
+    yaxis: { title: "F", range: [0.10, 1.00] },
     annotations: [{
       text: "Red contour: iso-N<sub>S</sub> at N<sub>S</sub> ≈ " + Ntarget.toFixed(2),
       xref: "paper", yref: "paper", x: 0.5, y: -0.18,
