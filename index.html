@@ -85,16 +85,21 @@
   }
   aside.sidebar dl {
     margin: 0;
+    display: grid;
+    grid-template-columns: 4.8em 1fr;
+    column-gap: 0.9em;
+    row-gap: 0.45em;
+    align-items: baseline;
   }
   aside.sidebar dt {
     font-weight: 600;
     color: var(--primary);
-    margin-top: 0.7em;
     font-variant-numeric: tabular-nums;
+    margin: 0;
+    text-align: left;
   }
-  aside.sidebar dt:first-of-type { margin-top: 0; }
   aside.sidebar dd {
-    margin: 0.15em 0 0 0;
+    margin: 0;
     color: var(--text);
     font-size: 0.95em;
   }
@@ -259,10 +264,8 @@
     <dt>F</dt>
     <dd>Third-party seller fixed entry cost</dd>
   </dl>
-  <div class="group-label">Visibility cost</div>
+  <div class="group-label">Visibility cost ψ(σ) = a&middot;e<sup>bσ</sup></div>
   <dl>
-    <dt>ψ(σ) = a&middot;e<sup>bσ</sup></dt>
-    <dd>Convex cost of self-preferencing intensity σ</dd>
     <dt>a</dt>
     <dd>Scale of the visibility cost</dd>
     <dt>b</dt>
@@ -321,10 +324,10 @@
   <h2>Direct vs indirect welfare channels of self-preferencing</h2>
   <div class="subtitle">Self-preferencing harms welfare only through the fee</div>
   <p class="summary">
-    Left panel (with &tau; held fixed): the direct effect on W is exactly zero
+    Dashed (direct, with &tau; held fixed at &tau;*): exactly flat,
     because the closed form W(&tau;) does not contain &sigma;.
-    Right panel (along the platform's fee response): downward sloping because
-    self-preferencing pulls &tau; up, and W is decreasing in &tau;.
+    Solid (indirect, along the platform's fee response): downward sloping
+    because self-preferencing pulls &tau; up, and W is decreasing in &tau;.
   </p>
   <div class="controls" id="ctrl3"></div>
   <div id="plot3" class="plot"></div>
@@ -754,11 +757,11 @@ function drawFig2(p) {
   });
 }
 
-// Figure 2 (welfare channels): side-by-side panels (1 row, 2 cols) to
-// mirror the print figure layout. Left = direct (flat); right = indirect
-// (downward sloping).
+// Figure 2 (welfare channels): both curves overlaid on the same (sigma, W)
+// axes. Direct = dashed (flat), indirect = solid (downward sloping), both
+// in black to mirror the print figure.
 function drawFig3(p) {
-  const sig_grid = linspace(0.01, 0.45, 80);
+  const sig_grid = linspace(0.01, 0.45, 120);
   const eq = joint_eq(p);
   const direct = sig_grid.map(_ => W_fn(eq.tau, p));
   const indirect = sig_grid.map(s => {
@@ -770,26 +773,27 @@ function drawFig3(p) {
   const traces = [
     {
       x: sig_grid, y: direct,
-      mode: "lines", name: "Direct: W with τ fixed at τ*",
-      line: { color: "#012169", width: 3 },
-      xaxis: "x", yaxis: "y"
+      mode: "lines", name: "Direct: W(τ*)",
+      line: { color: "#111", width: 2.5, dash: "dash" }
     },
     {
       x: sig_grid, y: indirect,
       mode: "lines", name: "Indirect: W(b<sub>τ</sub>(σ))",
-      line: { color: "#b91c1c", width: 3 },
-      xaxis: "x2", yaxis: "y2"
+      line: { color: "#111", width: 2.5 }
+    },
+    {
+      x: [eq.sigma, eq.sigma], y: [Math.min(...indirect.filter(v => !isNaN(v))) - 0.05,
+                                   Math.max(...direct, ...indirect.filter(v => !isNaN(v))) + 0.05],
+      mode: "lines", name: "σ*", showlegend: false,
+      line: { color: "#888", width: 1, dash: "dot" }
     }
   ];
 
   Plotly.react("plot3", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    grid: { rows: 1, columns: 2, pattern: "independent" },
-    xaxis:  { title: "σ", range: [0, 0.45], domain: [0,    0.45] },
-    yaxis:  { title: "W (direct)" },
-    xaxis2: { title: "σ", range: [0, 0.45], domain: [0.55, 1.00] },
-    yaxis2: { title: "W (indirect)" },
-    showlegend: true, legend: { orientation: "h", y: -0.25 }
+    xaxis: { title: "σ", range: [0, 0.45] },
+    yaxis: { title: "W" },
+    showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
 }
 
