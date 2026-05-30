@@ -17,6 +17,7 @@
     --border: #e5e7eb;
     --text: #111827;
     --muted: #6b7280;
+    --sidebar-width: 280px;
   }
   * { box-sizing: border-box; }
   body {
@@ -53,11 +54,66 @@
     border-radius: 4px;
   }
   nav a:hover { background: var(--bg); }
-  main {
-    max-width: 1100px;
+
+  /* Two-column layout: sticky sidebar + main flow */
+  .layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    gap: 1.5em;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 2em;
   }
+  aside.sidebar {
+    position: sticky;
+    top: 4em;
+    align-self: start;
+    max-height: calc(100vh - 5em);
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1em 1.1em;
+    font-size: 0.85em;
+  }
+  aside.sidebar h3 {
+    margin: 0 0 0.6em 0;
+    font-size: 0.95em;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  aside.sidebar dl {
+    margin: 0;
+  }
+  aside.sidebar dt {
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 0.7em;
+    font-variant-numeric: tabular-nums;
+  }
+  aside.sidebar dt:first-of-type { margin-top: 0; }
+  aside.sidebar dd {
+    margin: 0.15em 0 0 0;
+    color: var(--text);
+    font-size: 0.95em;
+  }
+  aside.sidebar .group-label {
+    margin-top: 1em;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 0.7em;
+  }
+  aside.sidebar .group-label:first-child {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  main { min-width: 0; }
   .figure-card {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -96,7 +152,7 @@
   }
   .controls {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0.6em 1em;
     margin-bottom: 1em;
     padding: 0.8em;
@@ -108,6 +164,11 @@
     font-size: 0.85em;
     color: var(--muted);
     margin-bottom: 0.2em;
+  }
+  .control .symbol {
+    font-weight: 600;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
   }
   .control .value {
     font-size: 0.85em;
@@ -148,6 +209,17 @@
     font-size: 0.85em;
     padding: 2em;
   }
+
+  /* Collapse to single column on narrow screens */
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+    aside.sidebar {
+      position: static;
+      max-height: none;
+    }
+  }
 </style>
 </head>
 <body>
@@ -172,6 +244,63 @@
   <a href="#ison-welfare">Iso-N<sub>S</sub> vs welfare</a>
 </nav>
 
+<div class="layout">
+
+<aside class="sidebar">
+  <h3>Parameter glossary</h3>
+  <div class="group-label">Demand and costs</div>
+  <dl>
+    <dt>v</dt>
+    <dd>Gross consumer valuation of an outside item</dd>
+    <dt>c</dt>
+    <dd>Third-party seller marginal cost</dd>
+    <dt>c<sub>A</sub></dt>
+    <dd>Platform's own marginal cost (defaults to c, the symmetric-cost case)</dd>
+    <dt>F</dt>
+    <dd>Third-party seller fixed entry cost</dd>
+  </dl>
+  <div class="group-label">Visibility cost</div>
+  <dl>
+    <dt>ψ(σ) = a&middot;e<sup>bσ</sup></dt>
+    <dd>Convex cost of self-preferencing intensity σ</dd>
+    <dt>a</dt>
+    <dd>Scale of the visibility cost</dd>
+    <dt>b</dt>
+    <dd>Curvature of the visibility cost (must exceed 1 for an interior σ)</dd>
+  </dl>
+  <div class="group-label">Dynamics</div>
+  <dl>
+    <dt>δ</dt>
+    <dd>Platform's discount factor across periods</dd>
+    <dt>λ</dt>
+    <dd>Speed-of-adjustment of the footprint Y<sub>t</sub> toward its target</dd>
+    <dt>K</dt>
+    <dd>Per-category fixed cost of platform entry</dd>
+  </dl>
+  <div class="group-label">Policy levers</div>
+  <dl>
+    <dt>τ&#772;</dt>
+    <dd>Fee cap (binding when below the unrestricted τ*)</dd>
+    <dt>σ<sub>cap</sub></dt>
+    <dd>Self-preferencing cap (σ = 0 is non-discrimination)</dd>
+  </dl>
+  <div class="group-label">Endogenous outputs</div>
+  <dl>
+    <dt>τ</dt>
+    <dd>Commission fee charged to third-party sellers</dd>
+    <dt>σ</dt>
+    <dd>Self-preferencing intensity in search rankings</dd>
+    <dt>Π</dt>
+    <dd>Platform profit per consumer</dd>
+    <dt>W</dt>
+    <dd>Consumer welfare (closed form; depends only on τ)</dd>
+    <dt>Y<sub>ss</sub></dt>
+    <dd>Steady-state platform footprint (fraction of categories entered)</dd>
+    <dt>N<sub>S</sub></dt>
+    <dd>Number of active third-party sellers</dd>
+  </dl>
+</aside>
+
 <main>
 
 <h2 class="group-heading">Figures from the paper</h2>
@@ -192,9 +321,9 @@
   <h2>Direct vs indirect welfare channels of self-preferencing</h2>
   <div class="subtitle">Self-preferencing harms welfare only through the fee</div>
   <p class="summary">
-    Top trace (with &tau; held fixed): the direct effect on W is exactly zero
+    Left panel (with &tau; held fixed): the direct effect on W is exactly zero
     because the closed form W(&tau;) does not contain &sigma;.
-    Bottom trace (along the platform's fee response): downward sloping because
+    Right panel (along the platform's fee response): downward sloping because
     self-preferencing pulls &tau; up, and W is decreasing in &tau;.
   </p>
   <div class="controls" id="ctrl3"></div>
@@ -215,11 +344,12 @@
 
 <section class="figure-card" id="ratchet" data-figref="fig:ratchet">
   <h2>Transitional ratchet of the platform footprint</h2>
-  <div class="subtitle">All paths converge to the same Y<sub>ss</sub></div>
+  <div class="subtitle">A single path; &lambda; controls speed only</div>
   <p class="summary">
     Y<sub>t+1</sub> = (1 &minus; &lambda;) Y<sub>t</sub> + &lambda; Y<sup>e</sup>.
-    The speed-of-adjustment parameter &lambda; controls the half-life of
-    convergence but not the destination.
+    Move the &lambda; slider to see how the speed-of-adjustment parameter
+    rescales the half-life of convergence while leaving the destination
+    Y<sub>ss</sub> unchanged.
   </p>
   <div class="controls" id="ctrl5"></div>
   <div id="plot5" class="plot"></div>
@@ -227,11 +357,11 @@
 
 <section class="figure-card" id="yss-cs" data-figref="fig:Yss_cs">
   <h2>Steady-state footprint comparative statics</h2>
-  <div class="subtitle">Y<sub>ss</sub> rises in &delta;, falls in K, neutral in &lambda;</div>
+  <div class="subtitle">Y<sub>ss</sub> rises in &delta;, falls in K</div>
   <p class="summary">
     The platform's long-run footprint is governed by patience &delta; and
-    entry cost K. The entry-speed parameter &lambda; affects only the
-    transition, not the steady state.
+    entry cost K. The &lambda;-neutrality of the steady state is
+    documented separately in the previous figure.
   </p>
   <div class="controls" id="ctrl6"></div>
   <div id="plot6" class="plot"></div>
@@ -298,6 +428,8 @@
 </section>
 
 </main>
+
+</div><!-- /.layout -->
 
 <footer>
   Companion to the paper.
@@ -452,17 +584,18 @@ function tau_W_solve(p) {
   return bisect(f, 0.005, 0.55);
 }
 
+// Per-knob symbol shown above each slider. Brief — the full explanation
+// lives in the sidebar glossary so the slider rail stays compact.
 const PARAM_SPECS = {
-  v:      { label: "Consumer valuation v",  min: 8,    max: 20,   step: 0.1, fmt: 2 },
-  c:      { label: "3P marginal cost c",    min: 3,    max: 15,   step: 0.1, fmt: 2 },
-  c_A:    { label: "Platform cost c<sub>A</sub> (defaults to c)", min: 3, max: 15, step: 0.1, fmt: 2 },
-  F:      { label: "3P fixed cost F",       min: 0.05, max: 1.0,  step: 0.01,fmt: 3 },
-  psi_a:  { label: "Visibility cost a (in ψ = a·e<sup>bσ</sup>)", min: 0.03, max: 0.3,  step: 0.005,fmt: 3 },
-  psi_b:  { label: "Visibility curvature b (in ψ = a·e<sup>bσ</sup>)",min: 1.2,  max: 3.5,  step: 0.05,fmt: 2 },
-  delta:  { label: "Discount factor δ", min: 0.80, max: 0.995,step: 0.005,fmt: 3 },
-  lambda: { label: "Entry speed λ",    min: 0.05, max: 0.95, step: 0.05,fmt: 2 },
-  K:      { label: "Per-category entry cost K",
-                                            min: 0.2,  max: 3.0,  step: 0.05,fmt: 2 }
+  v:      { symbol: "v",                    min: 8,    max: 20,   step: 0.1, fmt: 2 },
+  c:      { symbol: "c",                    min: 3,    max: 15,   step: 0.1, fmt: 2 },
+  c_A:    { symbol: "c<sub>A</sub>",        min: 3,    max: 15,   step: 0.1, fmt: 2 },
+  F:      { symbol: "F",                    min: 0.05, max: 1.0,  step: 0.01,fmt: 3 },
+  psi_a:  { symbol: "a",                    min: 0.03, max: 0.3,  step: 0.005,fmt: 3 },
+  psi_b:  { symbol: "b",                    min: 1.2,  max: 3.5,  step: 0.05,fmt: 2 },
+  delta:  { symbol: "δ",                    min: 0.80, max: 0.995,step: 0.005,fmt: 3 },
+  lambda: { symbol: "λ",                    min: 0.05, max: 0.95, step: 0.05,fmt: 2 },
+  K:      { symbol: "K",                    min: 0.2,  max: 3.0,  step: 0.05,fmt: 2 }
 };
 
 function makeControl(container, keys, params, onChange) {
@@ -474,8 +607,8 @@ function makeControl(container, keys, params, onChange) {
     const div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
-      "<label>" + spec.label +
-      " <span class=\"value\" id=\"val_" + container.id + "_" + k + "\">" +
+      "<label><span class=\"symbol\">" + spec.symbol + "</span> " +
+      "<span class=\"value\" id=\"val_" + container.id + "_" + k + "\">" +
       local[k].toFixed(spec.fmt) + "</span></label>" +
       "<input type=\"range\" min=\"" + spec.min + "\" max=\"" + spec.max +
       "\" step=\"" + spec.step + "\" value=\"" + local[k] +
@@ -531,10 +664,6 @@ function attachCameraTracker(plotId, defaultCam) {
   if (!div || div.__cameraTracked) return;
   div.__cameraTracked = true;
   div.on("plotly_relayout", ev => {
-    // Plotly reports either {scene.camera: ...} (whole object) or
-    // individual {"scene.camera.eye.x": ...} fields when the user
-    // rotates. Easiest path: read the live camera off the rendered
-    // scene after relayout.
     if (div._fullLayout && div._fullLayout.scene && div._fullLayout.scene._scene) {
       const live = div._fullLayout.scene._scene.getCamera();
       if (live) CAMERAS[plotId] = live;
@@ -586,7 +715,6 @@ function drawFig1(p) {
 function drawFig2(p) {
   const sig_grid = linspace(0.01, 0.40, 60);
   const tau_grid = linspace(0.05, 0.55, 60);
-  // z[i][j] = Pi(sigma_j, tau_i) for surface plot
   const z = tau_grid.map(t => sig_grid.map(s => Pi_fn(s, t, p)));
   const eq = joint_eq(p);
   const Pi_star = Pi_fn(eq.sigma, eq.tau, p);
@@ -626,6 +754,9 @@ function drawFig2(p) {
   });
 }
 
+// Figure 2 (welfare channels): side-by-side panels (1 row, 2 cols) to
+// mirror the print figure layout. Left = direct (flat); right = indirect
+// (downward sloping).
 function drawFig3(p) {
   const sig_grid = linspace(0.01, 0.45, 80);
   const eq = joint_eq(p);
@@ -653,17 +784,20 @@ function drawFig3(p) {
 
   Plotly.react("plot3", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    grid: { rows: 2, columns: 1, pattern: "independent" },
-    xaxis: { title: "", range: [0, 0.45] },
-    yaxis: { title: "W (direct)" },
-    xaxis2: { title: "σ", range: [0, 0.45] },
+    grid: { rows: 1, columns: 2, pattern: "independent" },
+    xaxis:  { title: "σ", range: [0, 0.45], domain: [0,    0.45] },
+    yaxis:  { title: "W (direct)" },
+    xaxis2: { title: "σ", range: [0, 0.45], domain: [0.55, 1.00] },
     yaxis2: { title: "W (indirect)" },
-    showlegend: true, legend: { orientation: "h", y: -0.2 }
+    showlegend: true, legend: { orientation: "h", y: -0.25 }
   }, { responsive: true, displayModeBar: false });
 }
 
+// Figure 3 (DWL). Adds a gray shaded region between tau^W and tau* spanning
+// the gap between TS(tau^W) and TS(tau) along the curve, plus a "DWL"
+// text annotation centered in that region. Mirrors the print figure.
 function drawFig4(p) {
-  const tau_grid = linspace(0.005, 0.45, 120);
+  const tau_grid = linspace(0.005, 0.45, 200);
   const tsv = tau_grid.map(t => {
     const s = br_sigma(t, p);
     if (isNaN(s) || s < 0 || s > 0.5) return NaN;
@@ -676,7 +810,27 @@ function drawFig4(p) {
   const tsMax = Math.max(...valid);
   const tsMin = Math.min(...valid);
 
+  // Build the shaded region: x runs along tau between tauW and tau*,
+  // y is TS(tau) at the top and TS(tau*) at the bottom. We trace a closed
+  // polygon (forward along the TS curve, back along the floor) and fill.
+  const lo = Math.min(tauW, eq.tau);
+  const hi = Math.max(tauW, eq.tau);
+  const inBand = tau_grid.map((t, i) => ({ t, ts: tsv[i] }))
+                         .filter(d => d.t >= lo && d.t <= hi && !isNaN(d.ts));
+  const polyX = inBand.map(d => d.t).concat(inBand.slice().reverse().map(d => d.t));
+  const polyY = inBand.map(d => d.ts).concat(inBand.slice().reverse().map(_ => tsAtStar));
+
+  const dwlMidX = 0.5 * (tauW + eq.tau);
+  const dwlMidY = 0.5 * (tsMax + tsAtStar);
+
   const traces = [
+    {
+      x: polyX, y: polyY,
+      fill: "toself", mode: "lines",
+      line: { width: 0 },
+      fillcolor: "rgba(120,120,120,0.35)",
+      name: "DWL", hoverinfo: "skip", showlegend: false
+    },
     {
       x: tau_grid, y: tsv,
       mode: "lines", name: "Total surplus",
@@ -698,30 +852,39 @@ function drawFig4(p) {
     margin: { l: 60, r: 30, t: 30, b: 60 },
     xaxis: { title: "Commission fee τ", range: [0, 0.45] },
     yaxis: { title: "Total surplus" },
-    showlegend: true, legend: { orientation: "h", y: -0.2 }
+    showlegend: true, legend: { orientation: "h", y: -0.2 },
+    annotations: [{
+      x: dwlMidX, y: dwlMidY,
+      text: "<b>DWL</b>", showarrow: false,
+      font: { size: 14, color: "#333" }
+    }]
   }, { responsive: true, displayModeBar: false });
 }
 
+// Figure 4 (transitional ratchet). Single trendline driven by the lambda
+// slider, not the four-curve overlay of the print figure. Y_ss is shown
+// as a dashed reference line so the convergence target is visible.
 function drawFig5(p) {
   const T = 40;
   const eq = joint_eq(p);
   const Yss = Y_ss(eq.sigma, eq.tau, p);
-  const lambdas = [0.10, 0.20, 0.50, 0.80];
-  const traces = lambdas.map(L => {
-    const pL = { ...p, lambda: L };
-    const y = Y_path(T, eq.sigma, eq.tau, pL);
-    return {
-      x: Array.from({ length: T + 1 }, (_, t) => t),
-      y: y,
-      mode: "lines+markers", name: "λ = " + L.toFixed(2),
-      line: { width: 2 }
-    };
-  });
-  traces.push({
-    x: [0, T], y: [Yss, Yss],
-    mode: "lines", name: "Y<sub>ss</sub>",
-    line: { color: "#525252", width: 1, dash: "dash" }
-  });
+  const y = Y_path(T, eq.sigma, eq.tau, p);
+  const t_grid = Array.from({ length: T + 1 }, (_, t) => t);
+
+  const traces = [
+    {
+      x: t_grid, y: y,
+      mode: "lines+markers",
+      name: "Y<sub>t</sub> at λ = " + p.lambda.toFixed(2),
+      line: { color: "#012169", width: 3 },
+      marker: { size: 5 }
+    },
+    {
+      x: [0, T], y: [Yss, Yss],
+      mode: "lines", name: "Y<sub>ss</sub>",
+      line: { color: "#525252", width: 1, dash: "dash" }
+    }
+  ];
 
   Plotly.react("plot5", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
@@ -731,6 +894,10 @@ function drawFig5(p) {
   }, { responsive: true, displayModeBar: false });
 }
 
+// Figure 5 (steady-state comparative statics). Two panels: Y_ss vs delta
+// and Y_ss vs K. The third panel from the print version (paths under
+// varying lambda) was dropped in both print and web because Figure 4
+// already carries the lambda-neutrality message.
 function drawFig6(p) {
   const eq = joint_eq(p);
   const delta_grid = linspace(0.80, 0.995, 30);
@@ -762,6 +929,11 @@ function drawFig6(p) {
   }, { responsive: true, displayModeBar: false });
 }
 
+// Figure 7 (cap cascade). Merge line legend with marker legend so each
+// regulatory regime appears once, not twice. We do that by giving each
+// regime a single trace with mode "lines+markers" where the marker is
+// placed at the equilibrium point only (a "marker-only" trace for the
+// remaining line segment is hidden from the legend with showlegend:false).
 function drawFig7(p, tauBar) {
   const tau_grid = linspace(0.05, 0.55, 80);
   const sig_grid = linspace(0.01, 0.40, 80);
@@ -774,6 +946,7 @@ function drawFig7(p, tauBar) {
   const sigmaFC = br_sigma(tauBar, p);
 
   const traces = [
+    // Two best-response curves (lines only, no marker overlap).
     {
       x: br_t_pts.map(d => d.sigma), y: br_t_pts.map(d => d.tau),
       mode: "lines", name: "b<sub>τ</sub>(σ)",
@@ -784,30 +957,35 @@ function drawFig7(p, tauBar) {
       mode: "lines", name: "b<sub>σ</sub>(τ)",
       line: { color: "#f2a900", width: 3 }
     },
+    // Three regulatory regimes. Each gets ONE legend entry. The trace
+    // draws the regime's reference line (cap or non-discrim axis) and
+    // its equilibrium marker as a single combined item.
     {
-      x: [0, 0.4], y: [tauBar, tauBar],
-      mode: "lines", name: "Fee cap τ̄",
-      line: { color: "#b91c1c", width: 2, dash: "dash" }
+      x: [0, 0.4, null, sigmaFC],
+      y: [tauBar, tauBar, null, tauBar],
+      mode: "lines+markers", name: "Fee cap τ̄",
+      line: { color: "#b91c1c", width: 2, dash: "dash" },
+      marker: {
+        color: "#b91c1c", size: 12,
+        symbol: ["", "", "", "triangle-up"]
+      },
+      hoverinfo: "skip"
     },
     {
-      x: [0, 0], y: [0, 0.55],
-      mode: "lines", name: "Non-discrim (σ = 0)",
-      line: { color: "#15803d", width: 2, dash: "dash" }
+      x: [0, 0, null, 0],
+      y: [0, 0.55, null, tauND],
+      mode: "lines+markers", name: "Non-discrim (σ = 0)",
+      line: { color: "#15803d", width: 2, dash: "dash" },
+      marker: {
+        color: "#15803d", size: 12,
+        symbol: ["", "", "", "square"]
+      },
+      hoverinfo: "skip"
     },
     {
       x: [eq.sigma], y: [eq.tau],
-      mode: "markers", name: "Unrestricted",
-      marker: { color: "#012169", size: 12 }
-    },
-    {
-      x: [sigmaFC], y: [tauBar],
-      mode: "markers", name: "Fee cap eq.",
-      marker: { color: "#b91c1c", size: 12, symbol: "triangle-up" }
-    },
-    {
-      x: [0], y: [tauND],
-      mode: "markers", name: "Non-discrim eq.",
-      marker: { color: "#15803d", size: 12, symbol: "square" }
+      mode: "markers", name: "Unrestricted (σ*, τ*)",
+      marker: { color: "#012169", size: 12, symbol: "circle" }
     }
   ];
 
@@ -823,11 +1001,8 @@ function drawFig8(p) {
   const eq = joint_eq(p);
   const tauBars  = linspace(0.05, eq.tau, 40);
   const sigCaps  = linspace(0, eq.sigma, 40);
-  // W depends on tau only, so the surface is a tilted plane along x.
-  // z[i][j] = W(tauBars[j], p)  (i indexes sigCaps, j indexes tauBars)
   const z = sigCaps.map(_ => tauBars.map(tb => W_fn(tb, p)));
 
-  // Reference policy points on the surface
   const W_fee_cap_only  = W_fn(0.20, p);
   const W_ND_only       = W_fn(eq.tau, p);
   const W_combined      = W_fn(0.20, p);
@@ -918,14 +1093,17 @@ function drawFig9(p, sigmaFixed) {
 
 window.addEventListener("DOMContentLoaded", () => {
   const staticKeys = ["v", "c", "F", "psi_a", "psi_b"];
-  const dynamicKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "K"];
+  // Figure 4 (ratchet, plot5): lambda is now the knob, not a multi-curve
+  // overlay, so include lambda in the slider set.
+  const ratchetKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "lambda", "K"];
+  const cstaticKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "K"];
 
   makeControl(document.getElementById("ctrl1"), staticKeys, PARAMS, drawFig1);
   makeControl(document.getElementById("ctrl2"), staticKeys, PARAMS, drawFig2);
   makeControl(document.getElementById("ctrl3"), staticKeys, PARAMS, drawFig3);
   makeControl(document.getElementById("ctrl4"), staticKeys, PARAMS, drawFig4);
-  makeControl(document.getElementById("ctrl5"), dynamicKeys, PARAMS, drawFig5);
-  makeControl(document.getElementById("ctrl6"), dynamicKeys, PARAMS, drawFig6);
+  makeControl(document.getElementById("ctrl5"), ratchetKeys, PARAMS, drawFig5);
+  makeControl(document.getElementById("ctrl6"), cstaticKeys, PARAMS, drawFig6);
 
   (function () {
     const ctrl = document.getElementById("ctrl7");
@@ -936,7 +1114,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
-      "<label>Fee cap τ̄ " +
+      "<label><span class=\"symbol\">τ&#772;</span> " +
       "<span class=\"value\" id=\"val_tauBar\">0.200</span></label>" +
       "<input type=\"range\" min=\"0.05\" max=\"0.5\" step=\"0.005\" " +
       "value=\"0.20\" id=\"rng_tauBar\">";
@@ -961,7 +1139,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
-      "<label>Fixed self-preferencing σ " +
+      "<label><span class=\"symbol\">σ (fixed)</span> " +
       "<span class=\"value\" id=\"val_sigfix\">0.200</span></label>" +
       "<input type=\"range\" min=\"0.0\" max=\"0.4\" step=\"0.01\" " +
       "value=\"0.20\" id=\"rng_sigfix\">";
