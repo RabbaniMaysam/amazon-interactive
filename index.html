@@ -789,8 +789,9 @@ function drawFig3(p) {
       line: { color: "#111", width: 2.5 }
     },
     {
-      x: [eq.sigma, eq.sigma], y: [Math.min(...indirect.filter(v => !isNaN(v))) - 0.05,
-                                   Math.max(...direct, ...indirect.filter(v => !isNaN(v))) + 0.05],
+      x: [eq.sigma, eq.sigma],
+      y: [Math.min(...indirect.filter(v => !isNaN(v))),
+          Math.max(...indirect.filter(v => !isNaN(v)))],
       mode: "lines", name: "σ*", showlegend: false,
       line: { color: "#888", width: 1, dash: "dot" }
     }
