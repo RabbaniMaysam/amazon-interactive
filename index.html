@@ -414,7 +414,13 @@ function br_sigma(tau, p) {
   return num / (1 - p.psi_b);
 }
 
-function bisect(f, lo, hi, tol = 1e-7, maxIter = 100) {
+// Interactive-grade bisection: looser tolerance and fewer iterations
+// than a production solver. Each bisection costs O(maxIter) Pi_fn
+// evaluations, so this is the dominant cost when many figures redraw.
+// tol = 1e-4 is well below visible precision on the page; maxIter = 30
+// gives ~30 iterations, enough for a 0.6-wide interval to reach 1e-9
+// resolution (which we exit early on via tol).
+function bisect(f, lo, hi, tol = 1e-4, maxIter = 30) {
   let flo = f(lo), fhi = f(hi);
   if (flo === undefined || isNaN(flo) || fhi === undefined || isNaN(fhi)) return NaN;
   if (flo * fhi > 0) return NaN;
@@ -430,34 +436,71 @@ function bisect(f, lo, hi, tol = 1e-7, maxIter = 100) {
   return 0.5 * (lo + hi);
 }
 
+// Analytic d Pi / d tau (holding sigma fixed). Derived from
+//   Pi = s_A + P*(1-R) - psi(sigma)
+//   s_A = F * exp(sigma - tau) / (1 - tau)  => d s_A / d tau = s_A * tau/(1-tau)
+//   P   = c*tau/(1-tau) + tau              => d P / d tau    = c/(1-tau)^2 + 1
+//   R   = F * exp(c/(1-tau) + 1 - v) / (1-tau)
+//                                          => d R / d tau    = R * [c/(1-tau)^2 + 1/(1-tau)]
+// Closed form avoids ~4 Pi_fn calls per bisection iteration.
+function dPi_dtau(sigma, tau, p) {
+  const omt = 1 - tau;
+  const sA  = p.F * Math.exp(sigma - tau) / omt;
+  const dsA = sA * tau / omt;
+  const P   = p.c * tau / omt + tau;
+  const dP  = p.c / (omt * omt) + 1;
+  const R   = 1 / ((1 - tau) * Math.exp(p.v - p.c / omt - 1) / p.F);
+  const dR  = R * (p.c / (omt * omt) + 1 / omt);
+  return dsA + dP * (1 - R) - P * dR;
+}
+
 function br_tau(sigma, p) {
-  const eps = 1e-5;
-  const f = tau => (Pi_fn(sigma, tau + eps, p) - Pi_fn(sigma, tau - eps, p))
-                   / (2 * eps);
+  const f = tau => dPi_dtau(sigma, tau, p);
   return bisect(f, 0.01, 0.6);
 }
 
-function joint_eq(p) {
+function joint_eq_raw(p) {
   const f = tau => {
     const s = br_sigma(tau, p);
     if (isNaN(s) || s < 0 || s > 0.5) return NaN;
-    const eps = 1e-5;
-    return (Pi_fn(s, tau + eps, p) - Pi_fn(s, tau - eps, p)) / (2 * eps);
+    return dPi_dtau(s, tau, p);
   };
   const tau = bisect(f, 0.05, 0.55);
   if (isNaN(tau)) return { sigma: NaN, tau: NaN };
   return { sigma: br_sigma(tau, p), tau };
 }
 
+// Per-redraw-cycle memo. joint_eq depends only on the parameter vector
+// reference; the orchestrator clears this at the start of each batch
+// so that every figure in the batch shares one solve. Without the memo
+// we computed joint_eq 8 times per slider tick.
+let _jointEqCache = null;
+let _jointEqCacheKey = null;
+function joint_eq(p) {
+  if (_jointEqCache && _jointEqCacheKey === p) return _jointEqCache;
+  _jointEqCache = joint_eq_raw(p);
+  _jointEqCacheKey = p;
+  return _jointEqCache;
+}
+function clearJointEqCache() { _jointEqCache = null; _jointEqCacheKey = null; }
+
+// Analytic d (W + Pi_M) / d tau where
+//   W   = ln(1-tau) + v - c/(1-tau) - 1 - ln F
+//   W'  = -1/(1-tau) - c/(1-tau)^2
+//   P, R, dP, dR as in dPi_dtau above.
+function dTS_dtau(tau, p) {
+  const omt = 1 - tau;
+  const dW = -1 / omt - p.c / (omt * omt);
+  const P   = p.c * tau / omt + tau;
+  const dP  = p.c / (omt * omt) + 1;
+  const R   = 1 / ((1 - tau) * Math.exp(p.v - p.c / omt - 1) / p.F);
+  const dR  = R * (p.c / (omt * omt) + 1 / omt);
+  return dW + dP * (1 - R) - P * dR;
+}
+
 function tau_W_solve(p) {
-  const eps = 1e-5;
-  const f = tau => {
-    const tsP = W_fn(tau + eps, p) + Pi_M(tau + eps, p);
-    const tsM = W_fn(tau - eps, p) + Pi_M(tau - eps, p);
-    return (tsP - tsM) / (2 * eps);
-  };
-  if (f(0.005) < 0) return 0;
-  return bisect(f, 0.005, 0.55);
+  if (dTS_dtau(0.005, p) < 0) return 0;
+  return bisect(tau => dTS_dtau(tau, p), 0.005, 0.55);
 }
 
 // Each parameter has: symbol (rendered), description, min/max/step, fmt
@@ -512,6 +555,8 @@ const EXTRAS = {
 
 // rAF-debounced redraw queue. Slider drags can fire many input events per
 // frame; we coalesce them so each affected figure renders once per frame.
+// We also clear the joint_eq memo once at the start of each batch so that
+// every figure in the batch shares one equilibrium solve.
 const pendingRedraws = new Set();
 let rafScheduled = false;
 function scheduleRedraw(figKeys) {
@@ -522,6 +567,7 @@ function scheduleRedraw(figKeys) {
     const keys = Array.from(pendingRedraws);
     pendingRedraws.clear();
     rafScheduled = false;
+    clearJointEqCache();
     keys.forEach(k => {
       const fig = FIGURES.find(f => f.key === k);
       if (fig) fig.draw();
