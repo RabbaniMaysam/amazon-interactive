@@ -65,6 +65,21 @@
     margin-bottom: 2em;
     padding: 1.5em;
   }
+  .group-heading {
+    font-size: 1.1em;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1.5em 0 0.4em 0;
+    padding-bottom: 0.4em;
+    border-bottom: 2px solid var(--border);
+  }
+  .group-heading:first-child { margin-top: 0; }
+  .group-intro {
+    color: var(--muted);
+    font-size: 0.9em;
+    margin: 0 0 1.2em 0;
+  }
   .figure-card h2 {
     margin: 0 0 0.4em 0;
     font-size: 1.2em;
@@ -144,22 +159,25 @@
 </header>
 
 <nav>
-  <a href="#fig1">Fig 1. Phase portrait</a>
-  <a href="#fig3">Fig 3. Welfare channels</a>
-  <a href="#fig4">Fig 4. DWL</a>
-  <a href="#fig5">Fig 5. Transitional ratchet</a>
-  <a href="#fig6">Fig 6. Y<sub>ss</sub> comp. statics</a>
-  <a href="#fig7">Fig 7. Cap cascade</a>
+  <span style="color:var(--muted); font-size:0.85em; margin-right:0.5em;">In the paper:</span>
+  <a href="#phase-portrait"  data-figref="fig:phase_portrait">Phase portrait</a>
+  <a href="#welfare-channels" data-figref="fig:welfare_channels">Welfare channels</a>
+  <a href="#dwl"             data-figref="fig:dwl">Deadweight loss</a>
+  <a href="#ratchet"         data-figref="fig:ratchet">Transitional ratchet</a>
+  <a href="#yss-cs"          data-figref="fig:Yss_cs">Steady-state comp. statics</a>
+  <a href="#cap-cascade"     data-figref="fig:cap_cascade">Cap cascade</a>
   <span style="color:var(--muted); font-size:0.85em; margin:0 0.5em;">|&nbsp;Web-only:</span>
-  <a href="#fig2">Profit surface (3D)</a>
-  <a href="#fig8">Combined regulation (3D)</a>
-  <a href="#fig9">Iso-N vs welfare</a>
+  <a href="#profit-surface">Profit surface (3D)</a>
+  <a href="#combined-reg">Combined regulation (3D)</a>
+  <a href="#ison-welfare">Iso-N<sub>S</sub> vs welfare</a>
 </nav>
 
 <main>
 
-<section class="figure-card" id="fig1">
-  <h2>Figure 1. Best-response phase portrait</h2>
+<h2 class="group-heading">Figures from the paper</h2>
+
+<section class="figure-card" id="phase-portrait" data-figref="fig:phase_portrait">
+  <h2>Best-response phase portrait</h2>
   <div class="subtitle">Strategic complementarity of fees and self-preferencing</div>
   <p class="summary">
     Both best responses slope upward, reflecting
@@ -170,21 +188,8 @@
   <div id="plot1" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig2">
-  <h2>Profit surface &Pi;(&sigma;, &tau;) <span style="color:var(--muted); font-weight:400; font-size:0.7em;">(web-only)</span></h2>
-  <div class="subtitle">3D view of the concave profit objective. Drag to rotate.</div>
-  <p class="summary">
-    The platform's profit &Pi;(&sigma;, &tau;) as a surface. The red marker is the
-    interior maximum (&sigma;*, &tau;*). The local concavity around the peak
-    verifies the second-order condition. This figure is web-only because the
-    3D view conveys the geometry more cleanly than a 2D contour map.
-  </p>
-  <div class="controls" id="ctrl2"></div>
-  <div id="plot2" class="plot"></div>
-</section>
-
-<section class="figure-card" id="fig3">
-  <h2>Figure 3. Direct vs indirect welfare channels of self-preferencing</h2>
+<section class="figure-card" id="welfare-channels" data-figref="fig:welfare_channels">
+  <h2>Direct vs indirect welfare channels of self-preferencing</h2>
   <div class="subtitle">Self-preferencing harms welfare only through the fee</div>
   <p class="summary">
     Top trace (with &tau; held fixed): the direct effect on W is exactly zero
@@ -196,8 +201,8 @@
   <div id="plot3" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig4">
-  <h2>Figure 4. Welfare-maximizing fee vs platform fee</h2>
+<section class="figure-card" id="dwl" data-figref="fig:dwl">
+  <h2>Welfare-maximizing fee vs platform fee</h2>
   <div class="subtitle">Deadweight loss of the platform's privately optimal fee</div>
   <p class="summary">
     Total surplus TS(&tau;) = W(&tau;) + &Pi;(&sigma;*(&tau;), &tau;). The
@@ -208,8 +213,8 @@
   <div id="plot4" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig5">
-  <h2>Figure 5. Transitional ratchet of the platform footprint</h2>
+<section class="figure-card" id="ratchet" data-figref="fig:ratchet">
+  <h2>Transitional ratchet of the platform footprint</h2>
   <div class="subtitle">All paths converge to the same Y<sub>ss</sub></div>
   <p class="summary">
     Y<sub>t+1</sub> = (1 &minus; &lambda;) Y<sub>t</sub> + &lambda; Y<sup>e</sup>.
@@ -220,8 +225,8 @@
   <div id="plot5" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig6">
-  <h2>Figure 6. Steady-state footprint comparative statics</h2>
+<section class="figure-card" id="yss-cs" data-figref="fig:Yss_cs">
+  <h2>Steady-state footprint comparative statics</h2>
   <div class="subtitle">Y<sub>ss</sub> rises in &delta;, falls in K, neutral in &lambda;</div>
   <p class="summary">
     The platform's long-run footprint is governed by patience &delta; and
@@ -232,8 +237,8 @@
   <div id="plot6" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig7">
-  <h2>Figure 7. Cap cascade</h2>
+<section class="figure-card" id="cap-cascade" data-figref="fig:cap_cascade">
+  <h2>Cap cascade</h2>
   <div class="subtitle">Capping one instrument disciplines the other</div>
   <p class="summary">
     A fee cap &tau;&#772; below &tau;* shifts equilibrium to (&sigma;<sup>FC</sup>, &tau;&#772;)
@@ -244,31 +249,49 @@
   <div id="plot7" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig8">
-  <h2>Combined regulation: welfare over (&tau;&#772;, &sigma;<sub>cap</sub>) <span style="color:var(--muted); font-weight:400; font-size:0.7em;">(web-only)</span></h2>
+<h2 class="group-heading">Web-only constructions</h2>
+<p class="group-intro">
+  Three further constructions that are clearer in three dimensions or as
+  interactive overlays. These do not appear in the paper.
+</p>
+
+<section class="figure-card" id="profit-surface">
+  <h2>Profit surface &Pi;(&sigma;, &tau;)</h2>
+  <div class="subtitle">3D view of the concave profit objective. Drag to rotate.</div>
+  <p class="summary">
+    The platform's profit &Pi;(&sigma;, &tau;) as a surface. The red marker is the
+    interior maximum (&sigma;*, &tau;*). The local concavity around the peak
+    verifies the second-order condition. Rendered in 3D because the geometry
+    is clearer than a 2D contour map.
+  </p>
+  <div class="controls" id="ctrl2"></div>
+  <div id="plot2" class="plot"></div>
+</section>
+
+<section class="figure-card" id="combined-reg">
+  <h2>Combined regulation: welfare over (&tau;&#772;, &sigma;<sub>cap</sub>)</h2>
   <div class="subtitle">3D welfare surface over the policy space. Drag to rotate.</div>
   <p class="summary">
     Consumer welfare W as a function of the fee cap &tau;&#772; and the
     self-preferencing cap &sigma;<sub>cap</sub>. Three reference policies are
     marked. The combined cap (low &tau;&#772;, &sigma;<sub>cap</sub>=0) sits
     at the highest level of the surface; either single-instrument regime is
-    dominated. Web-only because the 3D view of the welfare surface conveys
-    the dominance more directly than a 2D heatmap.
+    dominated. The 3D surface makes the dominance more direct than a 2D heatmap.
   </p>
   <div class="controls" id="ctrl8"></div>
   <div id="plot8" class="plot"></div>
 </section>
 
-<section class="figure-card" id="fig9">
-  <h2>Iso-N<sub>S</sub> versus welfare in (&tau;, F) space <span style="color:var(--muted); font-weight:400; font-size:0.7em;">(web-only)</span></h2>
+<section class="figure-card" id="ison-welfare">
+  <h2>Iso-N<sub>S</sub> versus welfare in (&tau;, F) space</h2>
   <div class="subtitle">Market-structure observables under-identify welfare</div>
   <p class="summary">
     Heat color: consumer welfare W(&tau;, F) at fixed &sigma;.
     The red curve is the locus of (&tau;, F) yielding the same active-seller
     count N<sub>S</sub>. Two points on the red curve generate the same
-    market-structure observable but different consumer welfare. Web-only
-    because the value of the figure is in tracing the iso-N<sub>S</sub>
-    curve across welfare contours interactively.
+    market-structure observable but different consumer welfare. The value
+    of the figure is in tracing the iso-N<sub>S</sub> curve across welfare
+    contours interactively.
   </p>
   <div class="controls" id="ctrl9"></div>
   <div id="plot9" class="plot"></div>
@@ -283,6 +306,37 @@
 </footer>
 
 <script>
+// ----------------------------------------------------------------------
+// Figure-number sync. The companion site shows "Figure N. <title>" for
+// figures that appear in the printed paper, where N must match the PDF.
+// The source of truth is figure-numbers.json, regenerated by
+// code/zz_update_web_fignums.R from latex/00_main.aux after each
+// pdflatex run. Each labeled element carries data-figref="fig:KEY";
+// we look up KEY in the JSON and prepend "Figure N. " to its text.
+//
+// Falls back silently to descriptive titles if the JSON is missing or
+// stale: better to ship without numbers than to ship with stale ones.
+// ----------------------------------------------------------------------
+fetch("figure-numbers.json", { cache: "no-store" })
+  .then(r => r.ok ? r.json() : null)
+  .then(map => {
+    if (!map) return;
+    document.querySelectorAll("[data-figref]").forEach(el => {
+      const key = el.getAttribute("data-figref");
+      const num = map[key];
+      if (!num) return;
+      // For section headings, prepend to the h2 inside. For nav links and
+      // any other element, prepend to the element's own text.
+      if (el.tagName === "SECTION") {
+        const h2 = el.querySelector("h2");
+        if (h2) h2.innerHTML = "Figure " + num + ". " + h2.innerHTML;
+      } else {
+        el.innerHTML = "Fig&nbsp;" + num + ". " + el.innerHTML;
+      }
+    });
+  })
+  .catch(() => { /* leave titles as-is */ });
+
 const PARAMS = {
   v: 13.1753747156,
   c: 8,
