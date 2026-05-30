@@ -464,6 +464,18 @@ function linspace(a, b, n) {
   return out;
 }
 
+// Read the current 3D scene camera from a Plotly div so we can pass it
+// back into Plotly.react and preserve the user's rotation across redraws.
+// Returns the supplied default if the plot has not been rendered yet or
+// has no scene camera (e.g. first call).
+function getCameraOrDefault(plotId, defaultCam) {
+  const div = document.getElementById(plotId);
+  if (div && div.layout && div.layout.scene && div.layout.scene.camera) {
+    return div.layout.scene.camera;
+  }
+  return defaultCam;
+}
+
 function drawFig1(p) {
   const tau_grid = linspace(0.05, 0.55, 80);
   const sig_grid = linspace(0.01, 0.40, 80);
@@ -534,13 +546,14 @@ function drawFig2(p) {
     }
   ];
 
+  const cam = getCameraOrDefault("plot2", { eye: { x: 1.6, y: -1.6, z: 0.9 } });
   Plotly.react("plot2", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
       xaxis: { title: "σ (self-preferencing)", range: [0, 0.4] },
       yaxis: { title: "τ (fee)", range: [0.05, 0.55] },
       zaxis: { title: "Profit Π" },
-      camera: { eye: { x: 1.6, y: -1.6, z: 0.9 } }
+      camera: cam
     }
   }, { responsive: true, displayModeBar: false });
 }
@@ -781,13 +794,14 @@ function drawFig8(p) {
     }
   ];
 
+  const cam8 = getCameraOrDefault("plot8", { eye: { x: 1.7, y: -1.5, z: 0.8 } });
   Plotly.react("plot8", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
       xaxis: { title: "Fee cap τ̄", range: [0.05, eq.tau + 0.005] },
       yaxis: { title: "Self-preferencing cap σ_cap", range: [0, eq.sigma + 0.005] },
       zaxis: { title: "Consumer welfare W" },
-      camera: { eye: { x: 1.7, y: -1.5, z: 0.8 } }
+      camera: cam8
     },
     showlegend: true, legend: { orientation: "h", y: 0 }
   }, { responsive: true, displayModeBar: false });
