@@ -464,16 +464,28 @@ function linspace(a, b, n) {
   return out;
 }
 
-// Read the current 3D scene camera from a Plotly div so we can pass it
-// back into Plotly.react and preserve the user's rotation across redraws.
-// Returns the supplied default if the plot has not been rendered yet or
-// has no scene camera (e.g. first call).
-function getCameraOrDefault(plotId, defaultCam) {
+// Preserve 3D camera rotation across redraws. div.layout.scene.camera is
+// the LAYOUT-DECLARED camera, not the live one after the user rotates;
+// reading it back gives stale values. The live camera lives in
+// div._fullLayout.scene._scene.camera and updates on plotly_relayout.
+// We listen to that event and cache the camera in CAMERAS[plotId];
+// each redraw threads CAMERAS[plotId] back into the layout.
+const CAMERAS = {};
+function attachCameraTracker(plotId, defaultCam) {
+  CAMERAS[plotId] = defaultCam;
   const div = document.getElementById(plotId);
-  if (div && div.layout && div.layout.scene && div.layout.scene.camera) {
-    return div.layout.scene.camera;
-  }
-  return defaultCam;
+  if (!div || div.__cameraTracked) return;
+  div.__cameraTracked = true;
+  div.on("plotly_relayout", ev => {
+    // Plotly reports either {scene.camera: ...} (whole object) or
+    // individual {"scene.camera.eye.x": ...} fields when the user
+    // rotates. Easiest path: read the live camera off the rendered
+    // scene after relayout.
+    if (div._fullLayout && div._fullLayout.scene && div._fullLayout.scene._scene) {
+      const live = div._fullLayout.scene._scene.getCamera();
+      if (live) CAMERAS[plotId] = live;
+    }
+  });
 }
 
 function drawFig1(p) {
@@ -546,7 +558,7 @@ function drawFig2(p) {
     }
   ];
 
-  const cam = getCameraOrDefault("plot2", { eye: { x: 1.6, y: -1.6, z: 0.9 } });
+  const cam = CAMERAS["plot2"] || { eye: { x: 1.6, y: -1.6, z: 0.9 } };
   Plotly.react("plot2", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
@@ -555,7 +567,9 @@ function drawFig2(p) {
       zaxis: { title: "Profit Π" },
       camera: cam
     }
-  }, { responsive: true, displayModeBar: false });
+  }, { responsive: true, displayModeBar: false }).then(() => {
+    attachCameraTracker("plot2", cam);
+  });
 }
 
 function drawFig3(p) {
@@ -794,7 +808,7 @@ function drawFig8(p) {
     }
   ];
 
-  const cam8 = getCameraOrDefault("plot8", { eye: { x: 1.7, y: -1.5, z: 0.8 } });
+  const cam8 = CAMERAS["plot8"] || { eye: { x: 1.7, y: -1.5, z: 0.8 } };
   Plotly.react("plot8", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
@@ -804,7 +818,9 @@ function drawFig8(p) {
       camera: cam8
     },
     showlegend: true, legend: { orientation: "h", y: 0 }
-  }, { responsive: true, displayModeBar: false });
+  }, { responsive: true, displayModeBar: false }).then(() => {
+    attachCameraTracker("plot8", cam8);
+  });
 }
 
 function drawFig9(p, sigmaFixed) {
