@@ -184,6 +184,11 @@
   .control input[type=range] {
     width: 100%;
   }
+  /* Highlighted knob: orange slider + orange symbol/value, signaling the
+     parameter the user is meant to vary on this particular figure. */
+  .control.highlight .symbol,
+  .control.highlight .value { color: var(--secondary); }
+  .control.highlight input[type=range] { accent-color: var(--secondary); }
   .plot {
     width: 100%;
     height: 480px;
@@ -601,14 +606,15 @@ const PARAM_SPECS = {
   K:      { symbol: "K",                    min: 0.2,  max: 3.0,  step: 0.05,fmt: 2 }
 };
 
-function makeControl(container, keys, params, onChange) {
+function makeControl(container, keys, params, onChange, opts) {
   container.innerHTML = "";
   const local = { ...params };
+  const highlightKey = (opts && opts.highlight) || null;
   keys.forEach(k => {
     const spec = PARAM_SPECS[k];
     if (!spec) return;
     const div = document.createElement("div");
-    div.className = "control";
+    div.className = "control" + (k === highlightKey ? " highlight" : "");
     div.innerHTML =
       "<label><span class=\"symbol\">" + spec.symbol + "</span> " +
       "<span class=\"value\" id=\"val_" + container.id + "_" + k + "\">" +
@@ -1099,14 +1105,19 @@ window.addEventListener("DOMContentLoaded", () => {
   const staticKeys = ["v", "c", "F", "psi_a", "psi_b"];
   // Figure 4 (ratchet, plot5): lambda is now the knob, not a multi-curve
   // overlay, so include lambda in the slider set.
-  const ratchetKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "lambda", "K"];
+  // lambda goes first (and is visually highlighted) because it is the
+  // pedagogical knob of interest for the transitional-ratchet figure:
+  // changing it rescales the half-life of convergence without moving
+  // the steady state. The other parameters are still adjustable below.
+  const ratchetKeys = ["lambda", "v", "c", "F", "psi_a", "psi_b", "delta", "K"];
   const cstaticKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "K"];
 
   makeControl(document.getElementById("ctrl1"), staticKeys, PARAMS, drawFig1);
   makeControl(document.getElementById("ctrl2"), staticKeys, PARAMS, drawFig2);
   makeControl(document.getElementById("ctrl3"), staticKeys, PARAMS, drawFig3);
   makeControl(document.getElementById("ctrl4"), staticKeys, PARAMS, drawFig4);
-  makeControl(document.getElementById("ctrl5"), ratchetKeys, PARAMS, drawFig5);
+  makeControl(document.getElementById("ctrl5"), ratchetKeys, PARAMS,
+              drawFig5, { highlight: "lambda" });
   makeControl(document.getElementById("ctrl6"), cstaticKeys, PARAMS, drawFig6);
 
   (function () {
