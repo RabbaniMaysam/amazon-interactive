@@ -641,8 +641,10 @@ function linspace(a, b, n) {
 }
 
 function drawFig1(p) {
-  const tau_grid = linspace(0.05, 0.55, 80);
-  const sig_grid = linspace(0.01, 0.40, 80);
+  // 50 grid points is more than enough for two smooth best-response curves;
+  // br_tau() is a bisection per point, which is the slowest single op here.
+  const tau_grid = linspace(0.05, 0.55, 50);
+  const sig_grid = linspace(0.01, 0.40, 50);
   const br_s_pts = tau_grid.map(t => ({ tau: t, sigma: br_sigma(t, p) }))
                            .filter(d => d.sigma > 0 && d.sigma < 0.5);
   const br_t_pts = sig_grid.map(s => ({ sigma: s, tau: br_tau(s, p) }))
@@ -682,8 +684,12 @@ function drawFig1(p) {
 }
 
 function drawFig2(p) {
-  const sig_grid = linspace(0.01, 0.40, 60);
-  const tau_grid = linspace(0.05, 0.55, 60);
+  // Lower-resolution grid for fast live re-rendering. 30x30 = 900 cells
+  // (down from 60x60 = 3600). Concavity is visible at this resolution
+  // because the surface is smooth. Z-projected contours are disabled for
+  // the same reason: they roughly double the tessellation work.
+  const sig_grid = linspace(0.01, 0.40, 30);
+  const tau_grid = linspace(0.05, 0.55, 30);
   // z[i][j] = Pi(sigma_j, tau_i) for surface plot
   const z = tau_grid.map(t => sig_grid.map(s => Pi_fn(s, t, p)));
   const eq = joint_eq(p);
@@ -694,13 +700,9 @@ function drawFig2(p) {
       x: sig_grid, y: tau_grid, z: z,
       type: "surface", colorscale: "Viridis", showscale: true,
       colorbar: { title: "Π" },
-      contours: {
-        z: {
-          show: true, usecolormap: true,
-          highlightcolor: "#42b5d3", project: { z: true }
-        }
-      },
-      opacity: 0.95
+      opacity: 0.95,
+      hoverinfo: "skip",
+      contours: { z: { show: false } }
     },
     {
       x: [eq.sigma], y: [eq.tau], z: [Pi_star],
@@ -858,8 +860,10 @@ function drawFig6(p) {
 }
 
 function drawFig7(p, tauBar) {
-  const tau_grid = linspace(0.05, 0.55, 80);
-  const sig_grid = linspace(0.01, 0.40, 80);
+  // Same sizing as Fig 1: 50 points keeps the curves smooth and avoids
+  // an extra 60 bisection calls every redraw.
+  const tau_grid = linspace(0.05, 0.55, 50);
+  const sig_grid = linspace(0.01, 0.40, 50);
   const br_s_pts = tau_grid.map(t => ({ tau: t, sigma: br_sigma(t, p) }))
                            .filter(d => d.sigma > 0 && d.sigma < 0.5);
   const br_t_pts = sig_grid.map(s => ({ sigma: s, tau: br_tau(s, p) }))
@@ -916,9 +920,12 @@ function drawFig7(p, tauBar) {
 
 function drawFig8(p) {
   const eq = joint_eq(p);
-  const tauBars  = linspace(0.05, eq.tau, 40);
-  const sigCaps  = linspace(0, eq.sigma, 40);
   // W depends on tau only, so the surface is a tilted plane along x.
+  // 30 x 5 is enough to render the plane cleanly (down from 40 x 40);
+  // a finer y-grid adds nothing because W is constant in y. Z-projected
+  // contours dropped for the same reason and to speed re-renders.
+  const tauBars  = linspace(0.05, eq.tau, 30);
+  const sigCaps  = linspace(0, eq.sigma, 5);
   // z[i][j] = W(tauBars[j], p)  (i indexes sigCaps, j indexes tauBars)
   const z = sigCaps.map(_ => tauBars.map(tb => W_fn(tb, p)));
 
@@ -932,13 +939,9 @@ function drawFig8(p) {
       x: tauBars, y: sigCaps, z: z,
       type: "surface", colorscale: "Viridis", showscale: true,
       colorbar: { title: "W" },
-      contours: {
-        z: {
-          show: true, usecolormap: true,
-          highlightcolor: "#42b5d3", project: { z: true }
-        }
-      },
-      opacity: 0.95
+      opacity: 0.95,
+      hoverinfo: "skip",
+      contours: { z: { show: false } }
     },
     {
       x: [eq.tau], y: [0], z: [W_ND_only],
@@ -970,8 +973,10 @@ function drawFig8(p) {
 }
 
 function drawFig9(p, sigmaFixed) {
-  const tau_grid = linspace(0.10, 0.50, 60);
-  const F_grid = linspace(0.10, 1.00, 60);
+  // Heatmap + two contour overlays is expensive at 60x60; 35x35 keeps
+  // the iso-N curve smooth-looking and is ~3x faster.
+  const tau_grid = linspace(0.10, 0.50, 35);
+  const F_grid = linspace(0.10, 1.00, 35);
   const Ngrid = F_grid.map(f => tau_grid.map(t => N_S(sigmaFixed, t, { ...p, F: f })));
   const Wgrid = F_grid.map(f => tau_grid.map(t => W_fn(t, { ...p, F: f })));
   const flatN = Ngrid.flat().filter(v => isFinite(v) && v > 0).sort((a, b) => a - b);
