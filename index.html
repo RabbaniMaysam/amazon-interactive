@@ -53,17 +53,62 @@
     border-radius: 4px;
   }
   nav a:hover { background: var(--bg); }
-  main {
-    max-width: 1100px;
+  .layout {
+    display: flex;
+    align-items: flex-start;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 2em;
+    padding: 1.5em 1em;
+    gap: 1.5em;
+  }
+  .sidebar {
+    flex: 0 0 320px;
+    position: sticky;
+    top: 3.2em;
+    max-height: calc(100vh - 4em);
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1em 1.1em 0.8em 1.1em;
+  }
+  .sidebar h3 {
+    margin: 0 0 0.5em 0;
+    font-size: 0.95em;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .sidebar p.intro {
+    font-size: 0.85em;
+    color: var(--muted);
+    margin: 0 0 1em 0;
+  }
+  .sidebar .reset-row {
+    margin-top: 0.8em;
+    padding-top: 0.8em;
+    border-top: 1px solid var(--border);
+    text-align: right;
+  }
+  main {
+    flex: 1 1 auto;
+    min-width: 0;
   }
   .figure-card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
-    margin-bottom: 2em;
-    padding: 1.5em;
+    margin-bottom: 1.5em;
+    padding: 1.3em;
+  }
+  @media (max-width: 960px) {
+    .layout { flex-direction: column; padding: 1em; }
+    .sidebar {
+      position: static;
+      width: 100%;
+      flex: none;
+      max-height: none;
+    }
   }
   .figure-card h2 {
     margin: 0 0 0.4em 0;
@@ -79,29 +124,40 @@
     margin: 0.5em 0 1em 0;
     font-size: 0.95em;
   }
-  .controls {
+  /* Sidebar (global) and inline (per-figure) controls share the .control
+     visual but differ in container layout. Sidebar stacks vertically;
+     inline uses a single horizontal row. */
+  .controls.inline {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.6em 1em;
-    margin-bottom: 1em;
-    padding: 0.8em;
+    grid-template-columns: 1fr;
+    gap: 0.4em;
+    margin-bottom: 0.8em;
+    padding: 0.7em 0.9em;
     background: var(--bg);
     border-radius: 6px;
+    font-size: 0.9em;
+  }
+  .controls.sidebar-controls .control {
+    margin-bottom: 0.55em;
   }
   .control { display: flex; flex-direction: column; }
   .control label {
-    font-size: 0.85em;
+    font-size: 0.82em;
     color: var(--muted);
-    margin-bottom: 0.2em;
+    margin-bottom: 0.15em;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
   }
   .control .value {
-    font-size: 0.85em;
     color: var(--primary);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    margin-left: 0.6em;
   }
   .control input[type=range] {
     width: 100%;
+    margin: 0;
   }
   .plot {
     width: 100%;
@@ -156,6 +212,17 @@
   <a href="#fig9">Iso-N vs welfare</a>
 </nav>
 
+<div class="layout">
+
+<aside class="sidebar" id="sidebar">
+  <h3>Model parameters</h3>
+  <p class="intro">All nine figures respond live to the sliders below. The two figure-specific display knobs (the fee cap &tau;&#772; on Figure 7 and the fixed &sigma; on Figure 9) live inside those figure cards.</p>
+  <div class="controls sidebar-controls" id="global-controls"></div>
+  <div class="reset-row">
+    <button class="reset-btn" id="global-reset">Reset to baseline</button>
+  </div>
+</aside>
+
 <main>
 
 <section class="figure-card" id="fig1">
@@ -166,7 +233,6 @@
     <span class="equation">&part;<sup>2</sup>&Pi; / &part;&sigma; &part;&tau; &gt; 0</span>.
     Their intersection is the hybrid equilibrium.
   </p>
-  <div class="controls" id="ctrl1"></div>
   <div id="plot1" class="plot"></div>
 </section>
 
@@ -179,7 +245,6 @@
     verifies the second-order condition. This figure is web-only because the
     3D view conveys the geometry more cleanly than a 2D contour map.
   </p>
-  <div class="controls" id="ctrl2"></div>
   <div id="plot2" class="plot"></div>
 </section>
 
@@ -192,7 +257,6 @@
     Bottom trace (along the platform's fee response): downward sloping because
     self-preferencing pulls &tau; up, and W is decreasing in &tau;.
   </p>
-  <div class="controls" id="ctrl3"></div>
   <div id="plot3" class="plot"></div>
 </section>
 
@@ -204,7 +268,6 @@
     welfare-maximizing &tau;<sup>W</sup> sits below the platform's
     &tau;*. The shaded region between them is the deadweight loss.
   </p>
-  <div class="controls" id="ctrl4"></div>
   <div id="plot4" class="plot"></div>
 </section>
 
@@ -216,7 +279,6 @@
     The speed-of-adjustment parameter &lambda; controls the half-life of
     convergence but not the destination.
   </p>
-  <div class="controls" id="ctrl5"></div>
   <div id="plot5" class="plot"></div>
 </section>
 
@@ -228,7 +290,6 @@
     entry cost K. The entry-speed parameter &lambda; affects only the
     transition, not the steady state.
   </p>
-  <div class="controls" id="ctrl6"></div>
   <div id="plot6" class="plot"></div>
 </section>
 
@@ -240,7 +301,7 @@
     with &sigma;<sup>FC</sup> &lt; &sigma;*. A non-discrimination mandate &sigma;=0
     shifts equilibrium to (0, &tau;<sup>ND</sup>) along b<sub>&tau;</sub>.
   </p>
-  <div class="controls" id="ctrl7"></div>
+  <div class="controls inline" id="ctrl7"></div>
   <div id="plot7" class="plot"></div>
 </section>
 
@@ -255,7 +316,6 @@
     dominated. Web-only because the 3D view of the welfare surface conveys
     the dominance more directly than a 2D heatmap.
   </p>
-  <div class="controls" id="ctrl8"></div>
   <div id="plot8" class="plot"></div>
 </section>
 
@@ -270,11 +330,13 @@
     because the value of the figure is in tracing the iso-N<sub>S</sub>
     curve across welfare contours interactively.
   </p>
-  <div class="controls" id="ctrl9"></div>
+  <div class="controls inline" id="ctrl9"></div>
   <div id="plot9" class="plot"></div>
 </section>
 
 </main>
+
+</div>
 
 <footer>
   Companion to the paper.
@@ -398,64 +460,178 @@ function tau_W_solve(p) {
   return bisect(f, 0.005, 0.55);
 }
 
+// Each parameter has: symbol (rendered), description, min/max/step, fmt
+// (decimal digits). The sidebar uses symbol + description; the value chip
+// uses fmt. The order here is the order the sliders appear in the sidebar.
 const PARAM_SPECS = {
-  v:      { label: "Consumer valuation v",  min: 8,    max: 20,   step: 0.1, fmt: 2 },
-  c:      { label: "3P marginal cost c",    min: 3,    max: 15,   step: 0.1, fmt: 2 },
-  c_A:    { label: "Platform cost c<sub>A</sub> (defaults to c)", min: 3, max: 15, step: 0.1, fmt: 2 },
-  F:      { label: "3P fixed cost F",       min: 0.05, max: 1.0,  step: 0.01,fmt: 3 },
-  psi_a:  { label: "Visibility cost a (in ψ = a·e<sup>bσ</sup>)", min: 0.03, max: 0.3,  step: 0.005,fmt: 3 },
-  psi_b:  { label: "Visibility curvature b (in ψ = a·e<sup>bσ</sup>)",min: 1.2,  max: 3.5,  step: 0.05,fmt: 2 },
-  delta:  { label: "Discount factor δ", min: 0.80, max: 0.995,step: 0.005,fmt: 3 },
-  lambda: { label: "Entry speed λ",    min: 0.05, max: 0.95, step: 0.05,fmt: 2 },
-  K:      { label: "Per-category entry cost K",
-                                            min: 0.2,  max: 3.0,  step: 0.05,fmt: 2 }
+  v:      { symbol: "v",       desc: "Consumer valuation",         min: 8,    max: 20,    step: 0.1,   fmt: 2 },
+  c:      { symbol: "c",       desc: "3P marginal cost",           min: 3,    max: 15,    step: 0.1,   fmt: 2 },
+  c_A:    { symbol: "c<sub>A</sub>", desc: "Platform marginal cost (1P)", min: 3, max: 15, step: 0.1, fmt: 2 },
+  F:      { symbol: "F",       desc: "3P fixed cost",              min: 0.05, max: 1.0,   step: 0.01,  fmt: 3 },
+  psi_a:  { symbol: "a",       desc: "Visibility cost level, ψ = a·e<sup>bσ</sup>", min: 0.03, max: 0.3, step: 0.005, fmt: 3 },
+  psi_b:  { symbol: "b",       desc: "Visibility cost curvature, ψ = a·e<sup>bσ</sup>", min: 1.2, max: 3.5, step: 0.05, fmt: 2 },
+  delta:  { symbol: "δ",       desc: "Discount factor",            min: 0.80, max: 0.995, step: 0.005, fmt: 3 },
+  lambda: { symbol: "λ",       desc: "Entry speed (transition only)", min: 0.05, max: 0.95, step: 0.05, fmt: 2 },
+  K:      { symbol: "K",       desc: "Per-category entry cost",    min: 0.2,  max: 3.0,   step: 0.05,  fmt: 2 }
 };
 
-function makeControl(container, keys, params, onChange) {
+// Global state: the live parameter vector. Single source of truth for
+// every figure that reads from it.
+const STATE = Object.assign({}, PARAMS);
+
+// Figure registry. Each entry: a key (matches the <div id="plotN">),
+// the draw function, the list of parameter keys the figure depends on,
+// and an optional extras object for figure-specific display state.
+// The orchestrator iterates this list on every parameter change.
+const FIGURES = [
+  { key: "plot1", draw: () => drawFig1(STATE),
+    deps: ["v", "c", "F", "psi_a", "psi_b"] },
+  { key: "plot2", draw: () => drawFig2(STATE),
+    deps: ["v", "c", "c_A", "F", "psi_a", "psi_b"] },
+  { key: "plot3", draw: () => drawFig3(STATE),
+    deps: ["v", "c", "F", "psi_a", "psi_b"] },
+  { key: "plot4", draw: () => drawFig4(STATE),
+    deps: ["v", "c", "F", "psi_a", "psi_b"] },
+  { key: "plot5", draw: () => drawFig5(STATE),
+    deps: ["v", "c", "F", "psi_a", "psi_b", "delta", "K"] },
+  { key: "plot6", draw: () => drawFig6(STATE),
+    deps: ["v", "c", "F", "psi_a", "psi_b", "delta", "K"] },
+  { key: "plot7", draw: () => drawFig7(STATE, EXTRAS.tauBar),
+    deps: ["v", "c", "F", "psi_a", "psi_b"] },
+  { key: "plot8", draw: () => drawFig8(STATE),
+    deps: ["v", "c", "F", "psi_a", "psi_b"] },
+  { key: "plot9", draw: () => drawFig9(STATE, EXTRAS.sigmaFixed),
+    deps: ["v", "c", "F", "psi_a", "psi_b"] }
+];
+
+// Figure-specific display state (not model primitives).
+const EXTRAS = {
+  tauBar:     0.20,  // Fig 7: fee cap displayed
+  sigmaFixed: 0.20   // Fig 9: fixed self-preferencing
+};
+
+// rAF-debounced redraw queue. Slider drags can fire many input events per
+// frame; we coalesce them so each affected figure renders once per frame.
+const pendingRedraws = new Set();
+let rafScheduled = false;
+function scheduleRedraw(figKeys) {
+  figKeys.forEach(k => pendingRedraws.add(k));
+  if (rafScheduled) return;
+  rafScheduled = true;
+  requestAnimationFrame(() => {
+    const keys = Array.from(pendingRedraws);
+    pendingRedraws.clear();
+    rafScheduled = false;
+    keys.forEach(k => {
+      const fig = FIGURES.find(f => f.key === k);
+      if (fig) fig.draw();
+    });
+  });
+}
+
+function affectedFigures(paramKey) {
+  return FIGURES.filter(f => f.deps.includes(paramKey)).map(f => f.key);
+}
+
+// Build the global sidebar: one labeled slider per parameter in
+// PARAM_SPECS, plus a top-level intro. Layout is: symbol (bold, left) and
+// description (small, right) on the label row, slider on the next row,
+// numeric value pinned to the right of the label.
+function buildSidebar() {
+  const container = document.getElementById("global-controls");
   container.innerHTML = "";
-  const local = { ...params };
-  keys.forEach(k => {
+  Object.keys(PARAM_SPECS).forEach(k => {
     const spec = PARAM_SPECS[k];
-    if (!spec) return;
     const div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
-      "<label>" + spec.label +
-      " <span class=\"value\" id=\"val_" + container.id + "_" + k + "\">" +
-      local[k].toFixed(spec.fmt) + "</span></label>" +
-      "<input type=\"range\" min=\"" + spec.min + "\" max=\"" + spec.max +
-      "\" step=\"" + spec.step + "\" value=\"" + local[k] +
-      "\" id=\"rng_" + container.id + "_" + k + "\">";
+      "<label>" +
+        "<span><b>" + spec.symbol + "</b>" +
+        " &mdash; <span style=\"color:var(--muted)\">" + spec.desc + "</span></span>" +
+        "<span class=\"value\" id=\"val_global_" + k + "\">" +
+          STATE[k].toFixed(spec.fmt) +
+        "</span>" +
+      "</label>" +
+      "<input type=\"range\"" +
+        " min=\"" + spec.min + "\"" +
+        " max=\"" + spec.max + "\"" +
+        " step=\"" + spec.step + "\"" +
+        " value=\"" + STATE[k] + "\"" +
+        " id=\"rng_global_" + k + "\">";
     container.appendChild(div);
     const input = div.querySelector("input");
     const valEl = div.querySelector(".value");
     input.addEventListener("input", e => {
-      const v = parseFloat(e.target.value);
-      local[k] = v;
-      valEl.textContent = v.toFixed(spec.fmt);
-      if (k === "c" && !keys.includes("c_A")) {
-        local.c_A = v;
-      }
-      onChange(local);
+      const newVal = parseFloat(e.target.value);
+      STATE[k] = newVal;
+      valEl.textContent = newVal.toFixed(spec.fmt);
+      // c_A defaults to track c only if the user hasn't touched c_A yet.
+      // Detect "untouched" by comparing rendered c_A value to PARAMS.c.
+      // Simpler heuristic: do nothing here; user can drag c_A explicitly.
+      scheduleRedraw(affectedFigures(k));
     });
   });
-  const resetDiv = document.createElement("div");
-  resetDiv.className = "control";
-  resetDiv.innerHTML =
-    "<label>&nbsp;</label>" +
-    "<button class=\"reset-btn\" id=\"reset_" + container.id +
-    "\">Reset to baseline</button>";
-  container.appendChild(resetDiv);
-  resetDiv.querySelector("button").addEventListener("click", () => {
-    keys.forEach(k => {
-      local[k] = PARAMS[k];
-      document.getElementById("rng_" + container.id + "_" + k).value = PARAMS[k];
-      document.getElementById("val_" + container.id + "_" + k).textContent =
+  // Global Reset button (already in HTML at #global-reset).
+  document.getElementById("global-reset").addEventListener("click", () => {
+    Object.keys(PARAM_SPECS).forEach(k => {
+      STATE[k] = PARAMS[k];
+      document.getElementById("rng_global_" + k).value = PARAMS[k];
+      document.getElementById("val_global_" + k).textContent =
         PARAMS[k].toFixed(PARAM_SPECS[k].fmt);
     });
-    onChange(local);
+    EXTRAS.tauBar = 0.20;
+    EXTRAS.sigmaFixed = 0.20;
+    const tauBarRng = document.getElementById("rng_tauBar");
+    if (tauBarRng) {
+      tauBarRng.value = EXTRAS.tauBar;
+      document.getElementById("val_tauBar").textContent = EXTRAS.tauBar.toFixed(3);
+    }
+    const sigfixRng = document.getElementById("rng_sigfix");
+    if (sigfixRng) {
+      sigfixRng.value = EXTRAS.sigmaFixed;
+      document.getElementById("val_sigfix").textContent = EXTRAS.sigmaFixed.toFixed(3);
+    }
+    scheduleRedraw(FIGURES.map(f => f.key));
   });
-  onChange(local);
+}
+
+// Build the inline fee-cap slider for Fig 7 and the fixed-sigma slider
+// for Fig 9. These are display knobs, not model primitives, so they live
+// inside their figure cards rather than in the sidebar.
+function buildInlineKnobs() {
+  // Fig 7: fee cap τ̄
+  const ctrl7 = document.getElementById("ctrl7");
+  ctrl7.innerHTML =
+    "<div class=\"control\">" +
+      "<label>" +
+        "<span><b>τ̄</b> &mdash; <span style=\"color:var(--muted)\">Fee cap to display</span></span>" +
+        "<span class=\"value\" id=\"val_tauBar\">" + EXTRAS.tauBar.toFixed(3) + "</span>" +
+      "</label>" +
+      "<input type=\"range\" min=\"0.05\" max=\"0.5\" step=\"0.005\"" +
+        " value=\"" + EXTRAS.tauBar + "\" id=\"rng_tauBar\">" +
+    "</div>";
+  document.getElementById("rng_tauBar").addEventListener("input", e => {
+    EXTRAS.tauBar = parseFloat(e.target.value);
+    document.getElementById("val_tauBar").textContent = EXTRAS.tauBar.toFixed(3);
+    scheduleRedraw(["plot7"]);
+  });
+
+  // Fig 9: fixed self-preferencing σ
+  const ctrl9 = document.getElementById("ctrl9");
+  ctrl9.innerHTML =
+    "<div class=\"control\">" +
+      "<label>" +
+        "<span><b>σ</b> &mdash; <span style=\"color:var(--muted)\">Fixed self-preferencing for the heatmap</span></span>" +
+        "<span class=\"value\" id=\"val_sigfix\">" + EXTRAS.sigmaFixed.toFixed(3) + "</span>" +
+      "</label>" +
+      "<input type=\"range\" min=\"0.0\" max=\"0.4\" step=\"0.01\"" +
+        " value=\"" + EXTRAS.sigmaFixed + "\" id=\"rng_sigfix\">" +
+    "</div>";
+  document.getElementById("rng_sigfix").addEventListener("input", e => {
+    EXTRAS.sigmaFixed = parseFloat(e.target.value);
+    document.getElementById("val_sigfix").textContent = EXTRAS.sigmaFixed.toFixed(3);
+    scheduleRedraw(["plot9"]);
+  });
 }
 
 function linspace(a, b, n) {
@@ -833,62 +1009,11 @@ function drawFig9(p, sigmaFixed) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  const staticKeys = ["v", "c", "F", "psi_a", "psi_b"];
-  const dynamicKeys = ["v", "c", "F", "psi_a", "psi_b", "delta", "K"];
-
-  makeControl(document.getElementById("ctrl1"), staticKeys, PARAMS, drawFig1);
-  makeControl(document.getElementById("ctrl2"), staticKeys, PARAMS, drawFig2);
-  makeControl(document.getElementById("ctrl3"), staticKeys, PARAMS, drawFig3);
-  makeControl(document.getElementById("ctrl4"), staticKeys, PARAMS, drawFig4);
-  makeControl(document.getElementById("ctrl5"), dynamicKeys, PARAMS, drawFig5);
-  makeControl(document.getElementById("ctrl6"), dynamicKeys, PARAMS, drawFig6);
-
-  (function () {
-    const ctrl = document.getElementById("ctrl7");
-    let localTauBar = 0.20;
-    let localP = { ...PARAMS };
-    function refresh() { drawFig7(localP, localTauBar); }
-    makeControl(ctrl, staticKeys, PARAMS, p => { localP = p; refresh(); });
-    const div = document.createElement("div");
-    div.className = "control";
-    div.innerHTML =
-      "<label>Fee cap τ̄ " +
-      "<span class=\"value\" id=\"val_tauBar\">0.200</span></label>" +
-      "<input type=\"range\" min=\"0.05\" max=\"0.5\" step=\"0.005\" " +
-      "value=\"0.20\" id=\"rng_tauBar\">";
-    ctrl.insertBefore(div, ctrl.firstChild);
-    div.querySelector("input").addEventListener("input", e => {
-      localTauBar = parseFloat(e.target.value);
-      document.getElementById("val_tauBar").textContent = localTauBar.toFixed(3);
-      refresh();
-    });
-    refresh();
-  })();
-
-  makeControl(document.getElementById("ctrl8"), staticKeys, PARAMS, drawFig8);
-
-  (function () {
-    const ctrl = document.getElementById("ctrl9");
-    let sigmaFixed = 0.20;
-    let localP = { ...PARAMS };
-    function refresh() { drawFig9(localP, sigmaFixed); }
-    makeControl(ctrl, ["v", "c", "psi_a", "psi_b"], PARAMS,
-                p => { localP = p; refresh(); });
-    const div = document.createElement("div");
-    div.className = "control";
-    div.innerHTML =
-      "<label>Fixed self-preferencing σ " +
-      "<span class=\"value\" id=\"val_sigfix\">0.200</span></label>" +
-      "<input type=\"range\" min=\"0.0\" max=\"0.4\" step=\"0.01\" " +
-      "value=\"0.20\" id=\"rng_sigfix\">";
-    ctrl.insertBefore(div, ctrl.firstChild);
-    div.querySelector("input").addEventListener("input", e => {
-      sigmaFixed = parseFloat(e.target.value);
-      document.getElementById("val_sigfix").textContent = sigmaFixed.toFixed(3);
-      refresh();
-    });
-    refresh();
-  })();
+  buildSidebar();
+  buildInlineKnobs();
+  // First-render: every figure once. Use the orchestrator's debounced
+  // queue so a hypothetical slow figure does not block the others.
+  scheduleRedraw(FIGURES.map(f => f.key));
 });
 </script>
 
