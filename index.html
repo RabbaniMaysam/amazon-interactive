@@ -184,10 +184,11 @@
   .control input[type=range] {
     width: 100%;
   }
-  /* Highlighted knob: orange slider + orange symbol/value, signaling the
-     parameter the user is meant to vary on this particular figure. */
+  /* Highlighted knob: orange slider track; force symbol and value text
+     to black (default symbol/value color is blue, which clashes with
+     the orange accent). */
   .control.highlight .symbol,
-  .control.highlight .value { color: var(--secondary); }
+  .control.highlight .value { color: #000; }
   .control.highlight input[type=range] { accent-color: var(--secondary); }
   .plot {
     width: 100%;
