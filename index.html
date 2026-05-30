@@ -148,7 +148,7 @@
   <a href="#fig3">Fig 3. Welfare channels</a>
   <a href="#fig4">Fig 4. DWL</a>
   <a href="#fig5">Fig 5. Transitional ratchet</a>
-  <a href="#fig6">Fig 6. Y_ss comp. statics</a>
+  <a href="#fig6">Fig 6. Y<sub>ss</sub> comp. statics</a>
   <a href="#fig7">Fig 7. Cap cascade</a>
   <span style="color:var(--muted); font-size:0.85em; margin:0 0.5em;">|&nbsp;Web-only:</span>
   <a href="#fig2">Profit surface (3D)</a>
@@ -401,12 +401,12 @@ function tau_W_solve(p) {
 const PARAM_SPECS = {
   v:      { label: "Consumer valuation v",  min: 8,    max: 20,   step: 0.1, fmt: 2 },
   c:      { label: "3P marginal cost c",    min: 3,    max: 15,   step: 0.1, fmt: 2 },
-  c_A:    { label: "Platform cost c_A",     min: 3,    max: 15,   step: 0.1, fmt: 2 },
+  c_A:    { label: "Platform cost c<sub>A</sub> (defaults to c)", min: 3, max: 15, step: 0.1, fmt: 2 },
   F:      { label: "3P fixed cost F",       min: 0.05, max: 1.0,  step: 0.01,fmt: 3 },
-  psi_a:  { label: "Visibility cost a",     min: 0.03, max: 0.3,  step: 0.005,fmt: 3 },
-  psi_b:  { label: "Visibility curvature b",min: 1.2,  max: 3.5,  step: 0.05,fmt: 2 },
-  delta:  { label: "Discount factor delta", min: 0.80, max: 0.995,step: 0.005,fmt: 3 },
-  lambda: { label: "Entry speed lambda",    min: 0.05, max: 0.95, step: 0.05,fmt: 2 },
+  psi_a:  { label: "Visibility cost a (in ψ = a·e<sup>bσ</sup>)", min: 0.03, max: 0.3,  step: 0.005,fmt: 3 },
+  psi_b:  { label: "Visibility curvature b (in ψ = a·e<sup>bσ</sup>)",min: 1.2,  max: 3.5,  step: 0.05,fmt: 2 },
+  delta:  { label: "Discount factor δ", min: 0.80, max: 0.995,step: 0.005,fmt: 3 },
+  lambda: { label: "Entry speed λ",    min: 0.05, max: 0.95, step: 0.05,fmt: 2 },
   K:      { label: "Per-category entry cost K",
                                             min: 0.2,  max: 3.0,  step: 0.05,fmt: 2 }
 };
@@ -477,30 +477,30 @@ function drawFig1(p) {
   const traces = [
     {
       x: br_t_pts.map(d => d.sigma), y: br_t_pts.map(d => d.tau),
-      mode: "lines", name: "b_tau(sigma)",
+      mode: "lines", name: "b<sub>τ</sub>(σ)",
       line: { color: "#012169", width: 3 }
     },
     {
       x: br_s_pts.map(d => d.sigma), y: br_s_pts.map(d => d.tau),
-      mode: "lines", name: "b_sigma(tau)",
+      mode: "lines", name: "b<sub>σ</sub>(τ)",
       line: { color: "#f2a900", width: 3 }
     },
     {
       x: [eq.sigma], y: [eq.tau],
-      mode: "markers", name: "Hybrid equilibrium",
+      mode: "markers", name: "Hybrid equilibrium (σ*, τ*)",
       marker: { color: "#b91c1c", size: 12 }
     },
     {
       x: [0], y: [tauM],
-      mode: "markers", name: "Pure-marketplace tau^M",
+      mode: "markers", name: "Pure-marketplace τ<sup>M</sup>",
       marker: { color: "#525252", size: 10, symbol: "triangle-up" }
     }
   ];
 
   Plotly.react("plot1", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Self-preferencing sigma", range: [0, 0.4] },
-    yaxis: { title: "Commission fee tau", range: [0, 0.55] },
+    xaxis: { title: "Self-preferencing intensity σ", range: [0, 0.4] },
+    yaxis: { title: "Commission fee τ", range: [0, 0.55] },
     showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
 }
@@ -517,7 +517,7 @@ function drawFig2(p) {
     {
       x: sig_grid, y: tau_grid, z: z,
       type: "surface", colorscale: "Viridis", showscale: true,
-      colorbar: { title: "Pi" },
+      colorbar: { title: "Π" },
       contours: {
         z: {
           show: true, usecolormap: true,
@@ -530,16 +530,16 @@ function drawFig2(p) {
       x: [eq.sigma], y: [eq.tau], z: [Pi_star],
       mode: "markers", showlegend: false,
       marker: { color: "#b91c1c", size: 6, symbol: "circle" },
-      type: "scatter3d", name: "(sigma*, tau*)"
+      type: "scatter3d", name: "(σ*, τ*)"
     }
   ];
 
   Plotly.react("plot2", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
-      xaxis: { title: "sigma", range: [0, 0.4] },
-      yaxis: { title: "tau", range: [0.05, 0.55] },
-      zaxis: { title: "Profit Pi" },
+      xaxis: { title: "σ (self-preferencing)", range: [0, 0.4] },
+      yaxis: { title: "τ (fee)", range: [0.05, 0.55] },
+      zaxis: { title: "Profit Π" },
       camera: { eye: { x: 1.6, y: -1.6, z: 0.9 } }
     }
   }, { responsive: true, displayModeBar: false });
@@ -558,13 +558,13 @@ function drawFig3(p) {
   const traces = [
     {
       x: sig_grid, y: direct,
-      mode: "lines", name: "Direct: W with tau fixed at tau*",
+      mode: "lines", name: "Direct: W with τ fixed at τ*",
       line: { color: "#012169", width: 3 },
       xaxis: "x", yaxis: "y"
     },
     {
       x: sig_grid, y: indirect,
-      mode: "lines", name: "Indirect: W(b_tau(sigma))",
+      mode: "lines", name: "Indirect: W(b<sub>τ</sub>(σ))",
       line: { color: "#b91c1c", width: 3 },
       xaxis: "x2", yaxis: "y2"
     }
@@ -575,7 +575,7 @@ function drawFig3(p) {
     grid: { rows: 2, columns: 1, pattern: "independent" },
     xaxis: { title: "", range: [0, 0.45] },
     yaxis: { title: "W (direct)" },
-    xaxis2: { title: "sigma", range: [0, 0.45] },
+    xaxis2: { title: "σ", range: [0, 0.45] },
     yaxis2: { title: "W (indirect)" },
     showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
@@ -603,19 +603,19 @@ function drawFig4(p) {
     },
     {
       x: [tauW, tauW], y: [tsMin, tsMax],
-      mode: "lines", name: "tau^W",
+      mode: "lines", name: "τ<sup>W</sup>",
       line: { color: "#15803d", width: 2, dash: "dash" }
     },
     {
       x: [eq.tau, eq.tau], y: [tsMin, tsMax],
-      mode: "lines", name: "tau*",
+      mode: "lines", name: "τ*",
       line: { color: "#b91c1c", width: 2, dash: "dash" }
     }
   ];
 
   Plotly.react("plot4", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Commission fee tau", range: [0, 0.45] },
+    xaxis: { title: "Commission fee τ", range: [0, 0.45] },
     yaxis: { title: "Total surplus" },
     showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
@@ -632,20 +632,20 @@ function drawFig5(p) {
     return {
       x: Array.from({ length: T + 1 }, (_, t) => t),
       y: y,
-      mode: "lines+markers", name: "lambda = " + L.toFixed(2),
+      mode: "lines+markers", name: "λ = " + L.toFixed(2),
       line: { width: 2 }
     };
   });
   traces.push({
     x: [0, T], y: [Yss, Yss],
-    mode: "lines", name: "Y_ss",
+    mode: "lines", name: "Y<sub>ss</sub>",
     line: { color: "#525252", width: 1, dash: "dash" }
   });
 
   Plotly.react("plot5", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
     xaxis: { title: "Period t" },
-    yaxis: { title: "Y_t", range: [0, null] },
+    yaxis: { title: "Y<sub>t</sub>", range: [0, null] },
     showlegend: true, legend: { orientation: "h", y: -0.2 }
   }, { responsive: true, displayModeBar: false });
 }
@@ -660,13 +660,13 @@ function drawFig6(p) {
   const traces = [
     {
       x: delta_grid, y: Yss_delta,
-      mode: "lines", name: "Y_ss vs delta",
+      mode: "lines", name: "Y<sub>ss</sub> vs δ",
       line: { color: "#012169", width: 3 },
       xaxis: "x", yaxis: "y"
     },
     {
       x: K_grid, y: Yss_K,
-      mode: "lines", name: "Y_ss vs K",
+      mode: "lines", name: "Y<sub>ss</sub> vs K",
       line: { color: "#f2a900", width: 3 },
       xaxis: "x2", yaxis: "y2"
     }
@@ -675,8 +675,8 @@ function drawFig6(p) {
   Plotly.react("plot6", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
     grid: { rows: 1, columns: 2, pattern: "independent" },
-    xaxis: { title: "delta" }, yaxis: { title: "Y_ss" },
-    xaxis2: { title: "K" }, yaxis2: { title: "Y_ss" },
+    xaxis: { title: "Discount factor δ" }, yaxis: { title: "Y<sub>ss</sub>" },
+    xaxis2: { title: "Entry cost K" }, yaxis2: { title: "Y<sub>ss</sub>" },
     showlegend: false
   }, { responsive: true, displayModeBar: false });
 }
@@ -695,22 +695,22 @@ function drawFig7(p, tauBar) {
   const traces = [
     {
       x: br_t_pts.map(d => d.sigma), y: br_t_pts.map(d => d.tau),
-      mode: "lines", name: "b_tau(sigma)",
+      mode: "lines", name: "b<sub>τ</sub>(σ)",
       line: { color: "#012169", width: 3 }
     },
     {
       x: br_s_pts.map(d => d.sigma), y: br_s_pts.map(d => d.tau),
-      mode: "lines", name: "b_sigma(tau)",
+      mode: "lines", name: "b<sub>σ</sub>(τ)",
       line: { color: "#f2a900", width: 3 }
     },
     {
       x: [0, 0.4], y: [tauBar, tauBar],
-      mode: "lines", name: "Fee cap",
+      mode: "lines", name: "Fee cap τ̄",
       line: { color: "#b91c1c", width: 2, dash: "dash" }
     },
     {
       x: [0, 0], y: [0, 0.55],
-      mode: "lines", name: "Non-discrimination",
+      mode: "lines", name: "Non-discrim (σ = 0)",
       line: { color: "#15803d", width: 2, dash: "dash" }
     },
     {
@@ -732,8 +732,8 @@ function drawFig7(p, tauBar) {
 
   Plotly.react("plot7", traces, {
     margin: { l: 60, r: 30, t: 30, b: 60 },
-    xaxis: { title: "Self-preferencing sigma", range: [-0.01, 0.4] },
-    yaxis: { title: "Commission fee tau", range: [0, 0.55] },
+    xaxis: { title: "Self-preferencing σ", range: [-0.01, 0.4] },
+    yaxis: { title: "Commission fee τ", range: [0, 0.55] },
     showlegend: true, legend: { orientation: "h", y: -0.25 }
   }, { responsive: true, displayModeBar: false });
 }
@@ -784,8 +784,8 @@ function drawFig8(p) {
   Plotly.react("plot8", traces, {
     margin: { l: 0, r: 0, t: 20, b: 0 },
     scene: {
-      xaxis: { title: "Fee cap tau-bar", range: [0.05, eq.tau + 0.005] },
-      yaxis: { title: "Self-preferencing cap", range: [0, eq.sigma + 0.005] },
+      xaxis: { title: "Fee cap τ̄", range: [0.05, eq.tau + 0.005] },
+      yaxis: { title: "Self-preferencing cap σ_cap", range: [0, eq.sigma + 0.005] },
       zaxis: { title: "Consumer welfare W" },
       camera: { eye: { x: 1.7, y: -1.5, z: 0.8 } }
     },
@@ -822,10 +822,10 @@ function drawFig9(p, sigmaFixed) {
 
   Plotly.react("plot9", traces, {
     margin: { l: 60, r: 60, t: 30, b: 60 },
-    xaxis: { title: "tau", range: [0.10, 0.50] },
-    yaxis: { title: "F (3P fixed cost)", range: [0.10, 1.00] },
+    xaxis: { title: "Commission fee τ", range: [0.10, 0.50] },
+    yaxis: { title: "3P fixed cost F", range: [0.10, 1.00] },
     annotations: [{
-      text: "Red contour: iso-N at N ~ " + Ntarget.toFixed(2),
+      text: "Red contour: iso-N<sub>S</sub> at N<sub>S</sub> ≈ " + Ntarget.toFixed(2),
       xref: "paper", yref: "paper", x: 0.5, y: -0.18,
       showarrow: false, font: { color: "#b91c1c" }
     }]
@@ -852,7 +852,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
-      "<label>Fee cap tau-bar " +
+      "<label>Fee cap τ̄ " +
       "<span class=\"value\" id=\"val_tauBar\">0.200</span></label>" +
       "<input type=\"range\" min=\"0.05\" max=\"0.5\" step=\"0.005\" " +
       "value=\"0.20\" id=\"rng_tauBar\">";
@@ -877,7 +877,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
-      "<label>Fixed self-preferencing sigma " +
+      "<label>Fixed self-preferencing σ " +
       "<span class=\"value\" id=\"val_sigfix\">0.200</span></label>" +
       "<input type=\"range\" min=\"0.0\" max=\"0.4\" step=\"0.01\" " +
       "value=\"0.20\" id=\"rng_sigfix\">";
