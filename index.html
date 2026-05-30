@@ -1072,33 +1072,39 @@ function drawFig9(p, sigmaFixed) {
   const flatN = Ngrid.flat().filter(v => isFinite(v) && v > 0).sort((a, b) => a - b);
   const Ntarget = flatN[Math.floor(flatN.length / 2)];
 
+  // Grayscale line figure (manuscript-ready): thin black iso-welfare
+  // contours versus one thick black iso-N_S contour. No heatmap, no color.
+  // The two families have very different slopes (iso-W is steep in F,
+  // iso-N_S is shallow), so the thick line visibly cuts across the thin
+  // ones: same market structure (N_S), different welfare.
   const traces = [
     {
-      x: tau_grid, y: F_grid, z: Wgrid,
-      type: "heatmap", colorscale: "Viridis",
-      colorbar: { title: "W" }
-    },
-    {
       type: "contour", x: tau_grid, y: F_grid, z: Wgrid,
-      contours: { coloring: "none" },
-      line: { color: "white", width: 1 }, showscale: false
+      contours: { coloring: "none", showlabels: true,
+                  labelfont: { size: 11, color: "#000" } },
+      ncontours: 7,
+      line: { color: "#000", width: 1 },
+      showscale: false, name: "iso-W", hoverinfo: "skip"
     },
     {
       type: "contour", x: tau_grid, y: F_grid, z: Ngrid,
       contours: { coloring: "none",
                   start: Ntarget, end: Ntarget, size: 0.001 },
-      line: { color: "#b91c1c", width: 3 }, showscale: false
+      line: { color: "#000", width: 3 },
+      showscale: false, name: "iso-N_S", hoverinfo: "skip"
     }
   ];
 
   Plotly.react("plot9", traces, {
-    margin: { l: 60, r: 60, t: 30, b: 60 },
+    margin: { l: 60, r: 30, t: 30, b: 70 },
     xaxis: { title: "τ", range: [0.10, 0.50] },
     yaxis: { title: "F", range: [0.10, 1.00] },
     annotations: [{
-      text: "Red contour: iso-N<sub>S</sub> at N<sub>S</sub> ≈ " + Ntarget.toFixed(2),
-      xref: "paper", yref: "paper", x: 0.5, y: -0.18,
-      showarrow: false, font: { color: "#b91c1c" }
+      text: "Thick line: iso-N<sub>S</sub> (N<sub>S</sub> ≈ " + Ntarget.toFixed(2) +
+            ", σ = " + sigmaFixed.toFixed(2) + ").  " +
+            "Thin lines: iso-welfare contours (labeled by W).",
+      xref: "paper", yref: "paper", x: 0.5, y: -0.20,
+      showarrow: false, font: { color: "#000", size: 12 }
     }]
   }, { responsive: true, displayModeBar: false });
 }
